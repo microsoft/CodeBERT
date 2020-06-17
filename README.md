@@ -1,5 +1,5 @@
 # CodeBERT
-This repo provides the code for reproducing the experiments in [CodeBERT: A Pre-Trained Model for Programming and Natural Languages](https://arxiv.org/pdf/2002.08155.pdf).
+This repo provides the code for reproducing the experiments in [CodeBERT: A Pre-Trained Model for Programming and Natural Languages](https://arxiv.org/pdf/2002.08155.pdf). The model is pre-trained on function-docstring data from CodeSearchNet in 6 programming languages, including Python, Java, Javascript, Ruby, PHP, and Go.
 
 ### Dependency
 
