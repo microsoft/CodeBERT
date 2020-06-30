@@ -1,5 +1,5 @@
 # CodeBERT
-This repo provides the codes and model of the work [CodeBERT: A Pre-Trained Model for Programming and Natural Languages](https://arxiv.org/pdf/2002.08155.pdf). The model is pre-trained on function-docstring data from CodeSearchNet in 6 programming languages, including Python, Java, Javascript, Ruby, PHP, and Go.
+This repo provides the code for reproducing the experiments in [CodeBERT: A Pre-Trained Model for Programming and Natural Languages](https://arxiv.org/pdf/2002.08155.pdf).
 
 ### Dependency
 
@@ -16,10 +16,13 @@ You can download the pre-trained model (CodeBERT) from the [website](https://dri
 ```shell
 pip install gdown
 mkdir pretrained_models
+cd pretrained_models
+mkdir CodeBERT
+cd CodeBERT
 gdown https://drive.google.com/uc?id=1Rw60M7A1h4L_nHfeLRhi7Z8H3EHvuHRG
 unzip pretrained_codebert.zip
 rm  pretrained_codebert.zip
-cd ..
+cd ../..
 ```
 ### Qiuck Tour
 We use huggingface/transformers framework to train the model. You can use our model like the pre-trained Roberta base. Now, We give an example on how to load the model.
@@ -28,8 +31,8 @@ import argparse
 import torch
 from transformers import RobertaTokenizer, RobertaConfig, RobertaModel
 
-config_path = "./pretrained_models/config.json"
-model_path = "./pretrained_models/pytorch_model.bin"
+config_path = "./pretrained_models/CodeBERT/config.json"
+model_path = "./pretrained_models/CodeBERT/pytorch_model.bin"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 config = RobertaConfig.from_pretrained(config_path)
@@ -116,5 +119,49 @@ Evaluation
 python mrr.py
 ```
 
-### Contact
+## Probing
+
+As stated in the paper, CodeBERT is not suitable for mask prediction task, while CodeBERT (MLM) is suitable for mask prediction task.
+
+You can download the pre-trained CodeBERT(MLM) from the [website](https://drive.google.com/file/d/14G5kYXp0OuNd9fmVJEnGhx3X7QGgmR7x/view). Or use the following command.
+```shell
+cd pretrained_models
+mkdir CodeBERT_MLM
+cd CodeBERT_MLM
+gdown https://drive.google.com/uc?id=14G5kYXp0OuNd9fmVJEnGhx3X7QGgmR7x
+unzip pretrained_codebert(mlm).zip
+rm pretrained_codebert(mlm).zip
+cd ../..
+```
+We give an example on how to use CodeBERT(MLM) for mask prediction task.
+```python
+from transformers import RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
+
+config_path = './pretrained_models/CodeBERT_MLM/config.json'
+model_path = './pretrained_models/CodeBERT_MLM/pytorch_model.bin'
+
+config = RobertaConfig.from_pretrained(config_path)
+model = RobertaForMaskedLM.from_pretrained(model_path, from_tf=False, config=config)
+tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
+
+CODE = "if (x is not None) <mask> (x>1)"
+fill_mask = pipeline('fill-mask', model=model, tokenizer=tokenizer)
+
+outputs = fill_mask(CODE)
+print(outputs)
+
+```
+Results
+```python
+'and', 'or', 'if', 'then', 'AND'
+```
+The detailed outputs are as follows:
+```python
+{'sequence': '<s> if (x is not None) and (x>1)</s>', 'score': 0.6049249172210693, 'token': 8}
+{'sequence': '<s> if (x is not None) or (x>1)</s>', 'score': 0.30680200457572937, 'token': 50}
+{'sequence': '<s> if (x is not None) if (x>1)</s>', 'score': 0.02133703976869583, 'token': 114}
+{'sequence': '<s> if (x is not None) then (x>1)</s>', 'score': 0.018607674166560173, 'token': 172}
+{'sequence': '<s> if (x is not None) AND (x>1)</s>', 'score': 0.007619690150022507, 'token': 4248}
+```
+## Contact
 Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn) and Duyu Tang (dutang@microsoft.com) if you have any further questions.
