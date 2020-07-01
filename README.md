@@ -163,8 +163,6 @@ The detailed outputs are as follows:
 {'sequence': '<s> if (x is not None) then (x>1)</s>', 'score': 0.018607674166560173, 'token': 172}
 {'sequence': '<s> if (x is not None) AND (x>1)</s>', 'score': 0.007619690150022507, 'token': 4248}
 ```
-## Contact
-Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn) and Duyu Tang (dutang@microsoft.com) if you have any further questions.
 
 ## Code Documentation Generation
 
@@ -268,3 +266,6 @@ The results on CodeSearchNet are shown in this Table:
 | Transformer |   11.18   |   11.59    |   16.38   |   15.81   |   16.26   |   22.12   |   15.56   |
 | RoBERTa     |   11.17   |   11.90    |   17.72   |   18.14   |   16.47   |   24.02   |   16.57   |
 | CodeBERT    | **12.16** | **14.90**  | **18.07** | **19.06** | **17.65** | **25.16** | **17.83** |
+
+## Contact
+Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn) and Duyu Tang (dutang@microsoft.com) if you have any further questions.
