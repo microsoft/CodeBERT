@@ -163,9 +163,7 @@ def main():
     parser.add_argument("--model_type", default=None, type=str, required=True,
                         help="Model type: e.g. roberta")
     parser.add_argument("--model_name_or_path", default=None, type=str, required=True,
-                        help="Path to pre-trained model: e.g. roberta-base" )
-    parser.add_argument("--tokenizer_name", default="", required=True,
-                        help="Pretrained tokenizer name or path if not the same as model_name")    
+                        help="Path to pre-trained model: e.g. roberta-base" )   
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="The output directory where the model predictions and checkpoints will be written.")
     parser.add_argument("--load_model_path", default=None, type=str, 
@@ -180,7 +178,8 @@ def main():
     
     parser.add_argument("--config_name", default="", type=str,
                         help="Pretrained config name or path if not the same as model_name")
-
+    parser.add_argument("--tokenizer_name", default="", type=str,
+                        help="Pretrained tokenizer name or path if not the same as model_name") 
     parser.add_argument("--max_source_length", default=64, type=int,
                         help="The maximum total source sequence length after tokenization. Sequences longer "
                              "than this will be truncated, sequences shorter will be padded.")
@@ -253,7 +252,7 @@ def main():
         
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path)
-    tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name,do_lower_case=args.do_lower_case)
+    tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,do_lower_case=args.do_lower_case)
     
     #budild model
     encoder = model_class.from_pretrained(args.model_name_or_path,config=config)    
