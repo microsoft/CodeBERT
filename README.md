@@ -103,16 +103,7 @@ python mrr.py
 
 As stated in the paper, CodeBERT is not suitable for mask prediction task, while CodeBERT (MLM) is suitable for mask prediction task.
 
-You can download the pre-trained CodeBERT(MLM) from the [website](https://drive.google.com/file/d/14G5kYXp0OuNd9fmVJEnGhx3X7QGgmR7x/view). Or use the following command.
-```shell
-cd pretrained_models
-mkdir CodeBERT_MLM
-cd CodeBERT_MLM
-gdown https://drive.google.com/uc?id=14G5kYXp0OuNd9fmVJEnGhx3X7QGgmR7x
-unzip pretrained_codebert(mlm).zip
-rm pretrained_codebert(mlm).zip
-cd ../..
-```
+
 We give an example on how to use CodeBERT(MLM) for mask prediction task.
 ```python
 from transformers import RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
