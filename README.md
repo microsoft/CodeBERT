@@ -7,23 +7,6 @@ This repo provides the code for reproducing the experiments in [CodeBERT: A Pre-
 - pip install transformers==2.5.0
 - pip install filelock
   
-## Pre-trained Model
-
-We have released the pre-trained model as described in the paper.
-
-You can download the pre-trained model (CodeBERT) from the [website](https://drive.google.com/open?id=1Rw60M7A1h4L_nHfeLRhi7Z8H3EHvuHRG). Or use the following command.
-
-```shell
-pip install gdown
-mkdir pretrained_models
-cd pretrained_models
-mkdir CodeBERT
-cd CodeBERT
-gdown https://drive.google.com/uc?id=1Rw60M7A1h4L_nHfeLRhi7Z8H3EHvuHRG
-unzip pretrained_codebert.zip
-rm  pretrained_codebert.zip
-cd ../..
-```
 
 ### Qiuck Tour
 We use huggingface/transformers framework to train the model. You can use our model like the pre-trained Roberta base. Now, We give an example on how to load the model.
@@ -65,7 +48,7 @@ We fine-tuned the model on 2*P100 GPUs.
 cd codesearch
 
 lang=php #fine-tuning a language-specific model for each programming language 
-pretrained_model=../pretrained_models/pytorch_model.bin  #CodeBERT: path to .bin file. Roberta: roberta-base
+pretrained_model=microsoft/codebert-base  #Roberta: roberta-base
 
 python run_classifier.py \
 --model_type roberta \
@@ -96,7 +79,7 @@ idx=0 #test batch idx
 
 python run_classifier.py \
 --model_type roberta \
---model_name_or_path roberta-base \
+--model_name_or_path microsoft/codebert-base \
 --task_name codesearch \
 --do_predict \
 --output_dir ../data/codesearch/test/$lang \
@@ -225,9 +208,9 @@ train_file=$data_dir/$lang/train.jsonl
 dev_file=$data_dir/$lang/valid.jsonl
 eval_steps=1000 #400 for ruby, 600 for javascript, 1000 for others
 train_steps=50000 #20000 for ruby, 30000 for javascript, 50000 for others
-pretrained_model=CodeBERT #CodeBERT: path to CodeBERT. Roberta: roberta-base
+pretrained_model=microsoft/codebert-base #Roberta: roberta-base
 
-python run.py --do_train --do_eval --model_type roberta --model_name_or_path $pretrained_model --config_name roberta-base --tokenizer_name roberta-base --train_filename $train_file --dev_filename $dev_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --train_batch_size $batch_size --eval_batch_size $batch_size --learning_rate $lr --train_steps $train_steps --eval_steps $eval_steps 
+python run.py --do_train --do_eval --model_type roberta --model_name_or_path $pretrained_model --train_filename $train_file --dev_filename $dev_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --train_batch_size $batch_size --eval_batch_size $batch_size --learning_rate $lr --train_steps $train_steps --eval_steps $eval_steps 
 ```
 
 
@@ -248,7 +231,7 @@ dev_file=$data_dir/$lang/valid.jsonl
 test_file=$data_dir/$lang/test.jsonl
 test_model=$output_dir/checkpoint-best-bleu/pytorch_model.bin #checkpoint for test
 
-python run.py --do_test --model_type roberta --model_name_or_path roberta-base --config_name roberta-base --tokenizer_name roberta-base  --load_model_path $test_model --dev_filename $dev_file --test_filename $test_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --eval_batch_size $batch_size
+python run.py --do_test --model_type roberta --model_name_or_path microsoft/codebert-base --load_model_path $test_model --dev_filename $dev_file --test_filename $test_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --eval_batch_size $batch_size
 ```
 
 The results on CodeSearchNet are shown in this Table:
