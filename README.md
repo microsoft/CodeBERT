@@ -5,7 +5,7 @@ This repo provides the code for reproducing the experiments in [CodeBERT: A Pre-
 
 - pip install torch==1.4.0
 - pip install transformers==2.5.0
-- pip install filelock
+- pip install filelock more_itertools
   
 
 ### Qiuck Tour
