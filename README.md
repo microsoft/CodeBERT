@@ -11,7 +11,6 @@ This repo provides the code for reproducing the experiments in [CodeBERT: A Pre-
 ### Qiuck Tour
 We use huggingface/transformers framework to train the model. You can use our model like the pre-trained Roberta base. Now, We give an example on how to load the model.
 ```python
-import argparse
 import torch
 from transformers import RobertaTokenizer, RobertaConfig, RobertaModel
 
