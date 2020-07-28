@@ -24,6 +24,7 @@ unzip pretrained_codebert.zip
 rm  pretrained_codebert.zip
 cd ../..
 ```
+
 ### Qiuck Tour
 We use huggingface/transformers framework to train the model. You can use our model like the pre-trained Roberta base. Now, We give an example on how to load the model.
 ```python
@@ -31,13 +32,9 @@ import argparse
 import torch
 from transformers import RobertaTokenizer, RobertaConfig, RobertaModel
 
-config_path = "./pretrained_models/CodeBERT/config.json"
-model_path = "./pretrained_models/CodeBERT/pytorch_model.bin"
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-config = RobertaConfig.from_pretrained(config_path)
-tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
-model = RobertaModel.from_pretrained(model_path, from_tf=False, config=config)
+tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+model = RobertaModel.from_pretrained("microsoft/codebert-base")
 model.to(device)
 ```
 
@@ -137,12 +134,8 @@ We give an example on how to use CodeBERT(MLM) for mask prediction task.
 ```python
 from transformers import RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
 
-config_path = './pretrained_models/CodeBERT_MLM/config.json'
-model_path = './pretrained_models/CodeBERT_MLM/pytorch_model.bin'
-
-config = RobertaConfig.from_pretrained(config_path)
-model = RobertaForMaskedLM.from_pretrained(model_path, from_tf=False, config=config)
-tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
+model = RobertaForMaskedLM.from_pretrained("microsoft/codebert-base-mlm")
+tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base-mlm")
 
 CODE = "if (x is not None) <mask> (x>1)"
 fill_mask = pipeline('fill-mask', model=model, tokenizer=tokenizer)
