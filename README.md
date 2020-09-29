@@ -133,6 +133,8 @@ The detailed outputs are as follows:
 
 This repo provides the code for reproducing the experiments on [CodeSearchNet](https://arxiv.org/abs/1909.09436) dataset for code document generation tasks in six programming languages.
 
+**!News: We release a new pipeline for this task. The new pipeline only needs 2 p100 GPUs and less training time for Code Documentation Generation. Please refer to the [website](https://github.com/microsoft/CodeXGLUE/tree/main/Code-Text/code-to-text).**
+
 ### Dependency
 
 - pip install torch==1.4.0
