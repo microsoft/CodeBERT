@@ -180,7 +180,7 @@ cd ../..
 
 ### Fine-Tune
 
-Download pre-trained CodeBERT model from [google drive](https://drive.google.com/drive/folders/1MfkEkPlo_Cb8vZruOjbepNHEQHQEgoRm?usp=sharing). We fine-tuned the model on 4*P40 GPUs. 
+We fine-tuned the model on 4*P40 GPUs. 
 
 ```shell
 cd code2nl
