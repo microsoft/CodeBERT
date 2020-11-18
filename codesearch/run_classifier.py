@@ -495,7 +495,7 @@ def main():
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
                                           num_labels=num_labels, finetuning_task=args.task_name)
     if args.tokenizer_name:
-        tokenizer_name = args.tokenzier_name
+        tokenizer_name = args.tokenizer_name
     elif args.model_name_or_path:
         tokenizer_name = 'roberta-base'
     tokenizer = tokenizer_class.from_pretrained(tokenizer_name, do_lower_case=args.do_lower_case)
