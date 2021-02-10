@@ -13,15 +13,11 @@ All the function and variable names are normalized. Their dataset contains two s
 
 ### Data Format
 
-The dataset is in the "data" folder. Each line of the files is a function.
-
-You can get data using the following command:
+The dataset is in the "data" folder. Each line of the files is a function. You can get data using the following command:
 
 ```
 unzip data.zip
 ```
-
-
 
 ### Data Statistics
 
@@ -33,18 +29,6 @@ Data statistics of this dataset are shown in the below table:
 |  Train  |   46,680  |   52,364  |
 |  Valid  |    5,835  |    6,545  |
 |   Test  |    5,835  |    6,545  |
-
-## Evaluator
-
-We provide a script to evaluate predictions for this task, and report BLEU scores and accuracy (exactly math score).
-
-### Example
-
-```bash
-python evaluator/evaluator.py -ref evaluator/references.txt -pre evaluator/predictions.txt
-```
-
-BLEU: 79.03, Acc: 40.0
 
 ## Pipeline-GraphCodeBERT
 
