@@ -1,16 +1,16 @@
-## Code Documentation Generation
+# Code Documentation Generation
 
 This repo provides the code for reproducing the experiments on [CodeSearchNet](https://arxiv.org/abs/1909.09436) dataset for code document generation tasks in six programming languages.
 
 **!News: We release a new pipeline for this task. The new pipeline only needs 2 p100 GPUs and less training time for Code Documentation Generation. Please refer to the [website](https://github.com/microsoft/CodeXGLUE/tree/main/Code-Text/code-to-text).**
 
-### Dependency
+## Dependency
 
 - pip install torch==1.4.0
 - pip install transformers==2.5.0
 - pip install filelock
 
-### Data Preprocess
+## Data Preprocess
 
 We clean CodeSearchNet dataset for this task by following steps:
 
@@ -33,7 +33,7 @@ Data statistic about the cleaned dataset for code document generation is shown i
 
 
 
-### Data Download
+## Data Download
 
 You can download dataset from the [website](https://drive.google.com/open?id=1rd2Tc6oUWBo7JouwexW3ksQ0PaOhUr6h). Or use the following command.
 
@@ -49,7 +49,7 @@ cd ../..
 
 
 
-### Fine-Tune
+## Fine-Tune
 
 We fine-tuned the model on 4*P40 GPUs. 
 
@@ -75,7 +75,7 @@ python run.py --do_train --do_eval --model_type roberta --model_name_or_path $pr
 
 
 
-### Inference and Evaluation
+## Inference and Evaluation
 
 After fine-tuning, inference and evaluation are as follows:
 

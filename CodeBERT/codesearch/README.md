@@ -1,6 +1,6 @@
-## Code Search
+# Code Search
 
-### Data Preprocess
+## Data Preprocess
 
 Both training and validation datasets are created in a way that positive and negative samples are balanced. Negative samples consist of balanced number of instances with randomly replaced NL and PL.
 
@@ -19,7 +19,7 @@ python process_data.py
 cd ..
 ```
 
-### Fine-Tune
+## Fine-Tune
 We fine-tuned the model on 2*P100 GPUs. 
 ```shell
 cd codesearch
@@ -46,7 +46,7 @@ python run_classifier.py \
 --output_dir ./models/$lang  \
 --model_name_or_path $pretrained_model
 ```
-### Inference and Evaluation
+## Inference and Evaluation
 
 Inference
 ```shell
