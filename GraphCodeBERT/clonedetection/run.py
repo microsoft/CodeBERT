@@ -155,15 +155,15 @@ def convert_examples_to_features(item):
                 ori2cur_pos[i]=(ori2cur_pos[i-1][1],ori2cur_pos[i-1][1]+len(code_tokens[i]))    
             code_tokens=[y for x in code_tokens for y in x]  
             #truncating
-            code_tokens=code_tokens[:512-3]
+            code_tokens=code_tokens[:args.code_length+args.data_flow_length-2-min(len(dfg),args.data_flow_length)]
             source_tokens =[tokenizer.cls_token]+code_tokens+[tokenizer.sep_token]
             source_ids =  tokenizer.convert_tokens_to_ids(source_tokens)
             position_idx = [i+tokenizer.pad_token_id + 1 for i in range(len(source_tokens))]
-            dfg=dfg[:args.block_size-len(source_tokens)]
+            dfg=dfg[:args.code_length+args.data_flow_length-len(code_tokens)]
             source_tokens+=[x[0] for x in dfg]
             position_idx+=[0 for x in dfg]
             source_ids+=[tokenizer.unk_token_id for x in dfg]
-            padding_length=args.block_size-len(source_ids)
+            padding_length=args.code_length+args.data_flow_length-len(source_ids)
             position_idx+=[tokenizer.pad_token_id]*padding_length
             source_ids+=[tokenizer.pad_token_id]*padding_length      
             
@@ -187,7 +187,7 @@ def convert_examples_to_features(item):
                      label,url1,url2)
 
 class TextDataset(Dataset):
-    def __init__(self, tokenizer, args, file_path='train', block_size=512,pool=None):
+    def __init__(self, tokenizer, args, file_path='train', pool=None):
         self.examples = []
         self.args=args
         index_filename=file_path
@@ -239,7 +239,8 @@ class TextDataset(Dataset):
         return len(self.examples)
     
     def __getitem__(self, item):
-        attn_mask_1=np.zeros((self.args.block_size,self.args.block_size),dtype=np.bool)
+        attn_mask_1= np.zeros((self.args.code_length+self.args.data_flow_length,
+                        self.args.code_length+self.args.data_flow_length),dtype=np.bool)
         node_index=sum([i>1 for i in self.examples[item].position_idx_1])
         max_length=sum([i!=1 for i in self.examples[item].position_idx_1])
         attn_mask_1[:node_index,:node_index]=True
@@ -256,7 +257,8 @@ class TextDataset(Dataset):
                     attn_mask_1[idx+node_index,a+node_index]=True  
                     
 
-        attn_mask_2=np.zeros((self.args.block_size,self.args.block_size),dtype=np.bool)
+        attn_mask_2= np.zeros((self.args.code_length+self.args.data_flow_length,
+                        self.args.code_length+self.args.data_flow_length),dtype=np.bool)
         node_index=sum([i>1 for i in self.examples[item].position_idx_2])
         max_length=sum([i!=1 for i in self.examples[item].position_idx_2])
         attn_mask_2[:node_index,:node_index]=True
@@ -419,7 +421,7 @@ def train(args, train_dataset, model, tokenizer,pool):
 def evaluate(args, model, tokenizer, prefix="",pool=None,eval_when_training=False):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
     eval_output_dir = args.output_dir
-    eval_dataset = TextDataset(tokenizer, args, file_path=args.eval_data_file,block_size=args.block_size,pool=pool)
+    eval_dataset = TextDataset(tokenizer, args, file_path=args.eval_data_file,pool=pool)
     if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir)
 
@@ -478,7 +480,7 @@ def evaluate(args, model, tokenizer, prefix="",pool=None,eval_when_training=Fals
 
 def test(args, model, tokenizer, prefix="",pool=None,best_threshold=0):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
-    eval_dataset = TextDataset(tokenizer, args, file_path=args.test_data_file,block_size=args.block_size,pool=pool)
+    eval_dataset = TextDataset(tokenizer, args, file_path=args.test_data_file,pool=pool)
 
     # Note that DistributedSampler samples randomly
     eval_sampler = SequentialSampler(eval_dataset) if args.local_rank == -1 else DistributedSampler(eval_dataset)
@@ -531,26 +533,18 @@ def main():
     parser.add_argument("--test_data_file", default=None, type=str,
                         help="An optional input evaluation data file to evaluate the perplexity on (a text file).")
                     
-    parser.add_argument("--model_type", default="bert", type=str,
-                        help="The model architecture to be fine-tuned.")
     parser.add_argument("--model_name_or_path", default=None, type=str,
                         help="The model checkpoint for weights initialization.")
-
-    parser.add_argument("--mlm", action='store_true',
-                        help="Train with masked-language modeling loss instead of language modeling.")
-    parser.add_argument("--mlm_probability", type=float, default=0.15,
-                        help="Ratio of tokens to mask for masked language modeling loss")
 
     parser.add_argument("--config_name", default="", type=str,
                         help="Optional pretrained config name or path if not the same as model_name_or_path")
     parser.add_argument("--tokenizer_name", default="", type=str,
                         help="Optional pretrained tokenizer name or path if not the same as model_name_or_path")
-    parser.add_argument("--cache_dir", default="", type=str,
-                        help="Optional directory to store the pre-trained models downloaded from s3 (instread of the default one)")
-    parser.add_argument("--block_size", default=-1, type=int,
-                        help="Optional input sequence length after tokenization."
-                             "The training dataset will be truncated in block of this size for training."
-                             "Default to the model max input length for single sentence inputs (take into account special tokens).")
+
+    parser.add_argument("--code_length", default=256, type=int,
+                        help="Optional Code input sequence length after tokenization.") 
+    parser.add_argument("--data_flow_length", default=64, type=int,
+                        help="Optional Data Flow input sequence length after tokenization.") 
     parser.add_argument("--do_train", action='store_true',
                         help="Whether to run training.")
     parser.add_argument("--do_eval", action='store_true',
@@ -583,33 +577,11 @@ def main():
     parser.add_argument("--warmup_steps", default=0, type=int,
                         help="Linear warmup over warmup_steps.")
 
-    parser.add_argument('--logging_steps', type=int, default=50,
-                        help="Log every X updates steps.")
-    parser.add_argument('--save_steps', type=int, default=50,
-                        help="Save checkpoint every X updates steps.")
-    parser.add_argument('--save_total_limit', type=int, default=None,
-                        help='Limit the total amount of checkpoints, delete the older checkpoints in the output_dir, does not delete by default')
-    parser.add_argument("--eval_all_checkpoints", action='store_true',
-                        help="Evaluate all checkpoints starting with the same prefix as model_name_or_path ending and ending with step number")
-    parser.add_argument("--no_cuda", action='store_true',
-                        help="Avoid using CUDA when available")
-    parser.add_argument('--overwrite_output_dir', action='store_true',
-                        help="Overwrite the content of the output directory")
-    parser.add_argument('--overwrite_cache', action='store_true',
-                        help="Overwrite the cached training and evaluation sets")
     parser.add_argument('--seed', type=int, default=42,
                         help="random seed for initialization")
     parser.add_argument('--epoch', type=int, default=42,
                         help="random seed for initialization")
-    parser.add_argument('--fp16', action='store_true',
-                        help="Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit")
-    parser.add_argument('--fp16_opt_level', type=str, default='O1',
-                        help="For fp16: Apex AMP optimization level selected in ['O0', 'O1', 'O2', and 'O3']."
-                             "See details at https://nvidia.github.io/apex/amp.html")
-    parser.add_argument("--local_rank", type=int, default=-1,
-                        help="For distributed training: local_rank")
-    parser.add_argument('--server_ip', type=str, default='', help="For distant debugging.")
-    parser.add_argument('--server_port', type=str, default='', help="For distant debugging.")
+
 
     
     pool = multiprocessing.Pool(cpu_cont)
@@ -638,7 +610,7 @@ def main():
     logger.info("Training/evaluation parameters %s", args)
     # Training
     if args.do_train:
-        train_dataset = TextDataset(tokenizer, args, file_path=args.train_data_file,block_size=args.block_size,pool=pool)
+        train_dataset = TextDataset(tokenizer, args, file_path=args.train_data_file,pool=pool)
         train(args, train_dataset, model, tokenizer,pool)
 
     # Evaluation
