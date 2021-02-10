@@ -30,7 +30,7 @@ Data statistics of the dataset are shown in the below table:
 |  Valid  |      500   |
 |   Test  |    1,000  |
 
-## Pipeline-CodeBERT
+## Pipeline-GraphCodeBERT
 
 ### Dependency
 
