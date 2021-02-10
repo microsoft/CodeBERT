@@ -1,4 +1,4 @@
-# CodeXGLUE -- Code Refinement
+# Code Refinement
 
 ## Task Definition
 
