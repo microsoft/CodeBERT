@@ -3,10 +3,8 @@ This repo provides the code for reproducing the experiments in [CodeBERT: A Pre-
 
 ### Dependency
 
-- pip install torch==1.4.0
-- pip install transformers==2.5.0
-- pip install filelock more_itertools
-  
+- pip install torch
+- pip install transformers
 
 ### Qiuck Tour
 We use huggingface/transformers framework to train the model. You can use our model like the pre-trained Roberta base. Now, We give an example on how to load the model.
@@ -20,84 +18,37 @@ model = RobertaModel.from_pretrained("microsoft/codebert-base")
 model.to(device)
 ```
 
-## Code Search
+### NL-PL Embeddings
 
-### Data Preprocess
+Here, we give an example to obtain embedding from CodeBERT.
 
-Both training and validation datasets are created in a way that positive and negative samples are balanced. Negative samples consist of balanced number of instances with randomly replaced NL and PL.
-
-We follow the official evaluation metric to calculate the Mean Reciprocal Rank (MRR) for each pair of test data (c, w) over a fixed set of 999 distractor codes.
-
-You can use the following command to download the preprocessed training and validation dataset and preprocess the test dataset by yourself. The preprocessed testing dataset is very large, so only the preprocessing script is provided.
-
-```shell
-mkdir data data/codesearch
-cd data/codesearch
-gdown https://drive.google.com/uc?id=1xgSR34XO8xXZg4cZScDYj2eGerBE9iGo  
-unzip codesearch_data.zip
-rm  codesearch_data.zip
-cd ../../codesearch
-python process_data.py
-cd ..
+```python
+>>> from transformers import AutoTokenizer, AutoModel
+>>> import torch
+>>> tokenizer = AutoTokenizer.from_pretrained("microsoft/codebert-base")
+>>> model = AutoModel.from_pretrained("microsoft/codebert-base")
+>>> nl_tokens=tokenizer.tokenize("return maximum value")
+['return', 'Ġmaximum', 'Ġvalue']
+>>> code_tokens=tokenizer.tokenize("def max(a,b): if a>b: return a else return b")
+['def', 'Ġmax', '(', 'a', ',', 'b', '):', 'Ġif', 'Ġa', '>', 'b', ':', 'Ġreturn', 'Ġa', 'Ġelse', 'Ġreturn', 'Ġb']
+>>> tokens=[tokenizer.cls_token]+nl_tokens+[tokenizer.sep_token]+code_tokens+[tokenizer.sep_token]
+['<s>', 'return', 'Ġmaximum', 'Ġvalue', '</s>', 'def', 'Ġmax', '(', 'a', ',', 'b', '):', 'Ġif', 'Ġa', '>', 'b', ':', 'Ġreturn', 'Ġa', 'Ġelse', 'Ġreturn', 'Ġb', '</s>']
+>>> tokens_ids=tokenizer.convert_tokens_to_ids(tokens)
+[0, 30921, 4532, 923, 2, 9232, 19220, 1640, 102, 6, 428, 3256, 114, 10, 15698, 428, 35, 671, 10, 1493, 671, 741, 2]
+>>> context_embeddings=model(torch.tensor(tokens_ids)[None,:])[0]
+torch.Size([1, 23, 768])
+tensor([[-0.1423,  0.3766,  0.0443,  ..., -0.2513, -0.3099,  0.3183],
+        [-0.5739,  0.1333,  0.2314,  ..., -0.1240, -0.1219,  0.2033],
+        [-0.1579,  0.1335,  0.0291,  ...,  0.2340, -0.8801,  0.6216],
+        ...,
+        [-0.4042,  0.2284,  0.5241,  ..., -0.2046, -0.2419,  0.7031],
+        [-0.3894,  0.4603,  0.4797,  ..., -0.3335, -0.6049,  0.4730],
+        [-0.1433,  0.3785,  0.0450,  ..., -0.2527, -0.3121,  0.3207]],
+       grad_fn=<SelectBackward>)
 ```
 
-### Fine-Tune
-We fine-tuned the model on 2*P100 GPUs. 
-```shell
-cd codesearch
 
-lang=php #fine-tuning a language-specific model for each programming language 
-pretrained_model=microsoft/codebert-base  #Roberta: roberta-base
-
-python run_classifier.py \
---model_type roberta \
---task_name codesearch \
---do_train \
---do_eval \
---eval_all_checkpoints \
---train_file train.txt \
---dev_file valid.txt \
---max_seq_length 200 \
---per_gpu_train_batch_size 32 \
---per_gpu_eval_batch_size 32 \
---learning_rate 1e-5 \
---num_train_epochs 8 \
---gradient_accumulation_steps 1 \
---overwrite_output_dir \
---data_dir ../data/codesearch/train_valid/$lang \
---output_dir ./models/$lang  \
---model_name_or_path $pretrained_model
-```
-### Inference and Evaluation
-
-Inference
-```shell
-lang=php #programming language
-idx=0 #test batch idx
-
-python run_classifier.py \
---model_type roberta \
---model_name_or_path microsoft/codebert-base \
---task_name codesearch \
---do_predict \
---output_dir ../data/codesearch/test/$lang \
---data_dir ../data/codesearch/test/$lang \
---max_seq_length 200 \
---per_gpu_train_batch_size 32 \
---per_gpu_eval_batch_size 32 \
---learning_rate 1e-5 \
---num_train_epochs 8 \
---test_file batch_${idx}.txt \
---pred_model_dir ./models/$lang/checkpoint-best/ \
---test_result_dir ./results/$lang/${idx}_batch_result.txt
-```
-
-Evaluation
-```shell
-python mrr.py
-```
-
-## Probing
+### Probing
 
 As stated in the paper, CodeBERT is not suitable for mask prediction task, while CodeBERT (MLM) is suitable for mask prediction task.
 
@@ -129,110 +80,18 @@ The detailed outputs are as follows:
 {'sequence': '<s> if (x is not None) AND (x>1)</s>', 'score': 0.007619690150022507, 'token': 4248}
 ```
 
-## Code Documentation Generation
+### Downstream Tasks
 
-This repo provides the code for reproducing the experiments on [CodeSearchNet](https://arxiv.org/abs/1909.09436) dataset for code document generation tasks in six programming languages.
-
-**!News: We release a new pipeline for this task. The new pipeline only needs 2 p100 GPUs and less training time for Code Documentation Generation. Please refer to the [website](https://github.com/microsoft/CodeXGLUE/tree/main/Code-Text/code-to-text).**
-
-### Dependency
-
-- pip install torch==1.4.0
-- pip install transformers==2.5.0
-- pip install filelock
-
-### Data Preprocess
-
-We clean CodeSearchNet dataset for this task by following steps:
-
-- Remove comments in the code
-- Remove examples that codes cannot be parsed into an abstract syntax tree.
-- Remove examples that #tokens of documents is < 3 or >256
-- Remove examples that documents contain special tokens (e.g. <img ...> or https:...)
-- Remove examples that documents are not English.
-
-Data statistic about the cleaned dataset for code document generation is shown in this Table. We release the cleaned dataset in this [website](https://drive.google.com/open?id=1rd2Tc6oUWBo7JouwexW3ksQ0PaOhUr6h).
-
-| PL         | Training |  Dev   |  Test  |
-| :--------- | :------: | :----: | :----: |
-| Python     | 251,820  | 13,914 | 14,918 |
-| PHP        | 241,241  | 12,982 | 14,014 |
-| Go         | 167,288  | 7,325  | 8,122  |
-| Java       | 164,923  | 5,183  | 10,955 |
-| JavaScript |  58,025  | 3,885  | 3,291  |
-| Ruby       |  24,927  | 1,400  | 1,261  |
+For Code Search and Code Docsmentation Generation tasks, please refer to the [CodeBERT](https://github.com/guoday/CodeBERT/tree/master/CodeBERT) folder.
 
 
 
-### Data Download
+# GraphCodeBERT
 
-You can download dataset from the [website](https://drive.google.com/open?id=1rd2Tc6oUWBo7JouwexW3ksQ0PaOhUr6h). Or use the following command.
+This repo also provides the code for reproducing the experiments in [GraphCodeBERT: Pre-training Code Representations with Data Flow](https://openreview.net/pdf?id=jLoC4ez43PZ). GraphCodeBERT a pre-trained model for programming language that considers the inherent structure of code i.e. data flow, which is a multi-programming-lingual model pre-trained on NL-PL pairs in 6 programming languages (Python, Java, JavaScript, PHP, Ruby, Go). 
 
-```shell
-pip install gdown
-mkdir data data/code2nl
-cd data/code2nl
-gdown https://drive.google.com/uc?id=1rd2Tc6oUWBo7JouwexW3ksQ0PaOhUr6h
-unzip Cleaned_CodeSearchNet.zip
-rm Cleaned_CodeSearchNet.zip
-cd ../..
-```
-
-
-
-### Fine-Tune
-
-We fine-tuned the model on 4*P40 GPUs. 
-
-```shell
-cd code2nl
-
-lang=php #programming language
-lr=5e-5
-batch_size=64
-beam_size=10
-source_length=256
-target_length=128
-data_dir=../data/code2nl/CodeSearchNet
-output_dir=model/$lang
-train_file=$data_dir/$lang/train.jsonl
-dev_file=$data_dir/$lang/valid.jsonl
-eval_steps=1000 #400 for ruby, 600 for javascript, 1000 for others
-train_steps=50000 #20000 for ruby, 30000 for javascript, 50000 for others
-pretrained_model=microsoft/codebert-base #Roberta: roberta-base
-
-python run.py --do_train --do_eval --model_type roberta --model_name_or_path $pretrained_model --train_filename $train_file --dev_filename $dev_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --train_batch_size $batch_size --eval_batch_size $batch_size --learning_rate $lr --train_steps $train_steps --eval_steps $eval_steps 
-```
-
-
-
-### Inference and Evaluation
-
-After fine-tuning, inference and evaluation are as follows:
-
-```shell
-lang=php #programming language
-beam_size=10
-batch_size=128
-source_length=256
-target_length=128
-output_dir=model/$lang
-data_dir=../data/code2nl/CodeSearchNet
-dev_file=$data_dir/$lang/valid.jsonl
-test_file=$data_dir/$lang/test.jsonl
-test_model=$output_dir/checkpoint-best-bleu/pytorch_model.bin #checkpoint for test
-
-python run.py --do_test --model_type roberta --model_name_or_path microsoft/codebert-base --load_model_path $test_model --dev_filename $dev_file --test_filename $test_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --eval_batch_size $batch_size
-```
-
-The results on CodeSearchNet are shown in this Table:
-
-| Model       |   Ruby    | Javascript |    Go     |  Python   |   Java    |    PHP    |  Overall  |
-| ----------- | :-------: | :--------: | :-------: | :-------: | :-------: | :-------: | :-------: |
-| Seq2Seq     |   9.64    |   10.21    |   13.98   |   15.93   |   15.09   |   21.08   |   14.32   |
-| Transformer |   11.18   |   11.59    |   16.38   |   15.81   |   16.26   |   22.12   |   15.56   |
-| RoBERTa     |   11.17   |   11.90    |   17.72   |   18.14   |   16.47   |   24.02   |   16.57   |
-| CodeBERT    | **12.16** | **14.90**  | **18.07** | **19.06** | **17.65** | **25.16** | **17.83** |
+For downstream tasks like code search, clone detection, code refinement and code translation, please refer to the [GraphCodeBERT](https://github.com/guoday/CodeBERT/tree/master/GraphCodeBERT) folder.
 
 ## Contact
+
 Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn) and Duyu Tang (dutang@microsoft.com) if you have any further questions.
