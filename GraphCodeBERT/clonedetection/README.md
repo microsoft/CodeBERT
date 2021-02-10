@@ -28,7 +28,7 @@ Data statistics of the dataset are shown in the below table:
 | Dev   |  415,416  |
 | Test  |  415,416  |
 
-You can download and preprocess data using the following command.
+You can get data using the following command.
 
 ```
 unzip dataset.zip
