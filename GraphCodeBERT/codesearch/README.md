@@ -43,7 +43,7 @@ cd ..
 
 ## Fine-Tune
 
-We fine-tuned the model on 2*P100 GPUs. 
+We fine-tuned the model on 2*V100-16G GPUs. 
 ```shell
 lang=ruby
 mkdir -p ./saved_models/$lang
@@ -54,10 +54,10 @@ python run.py \
     --tokenizer_name=microsoft/graphcodebert-base \
     --lang=$lang \
     --do_train \
-    --train_data_file=dataset/$1/train.jsonl \
-    --eval_data_file=dataset/$1/valid.jsonl \
-    --test_data_file=dataset/$1/test.jsonl \
-    --codebase_file=dataset/$1/codebase.jsonl \
+    --train_data_file=dataset/$lang/train.jsonl \
+    --eval_data_file=dataset/$lang/valid.jsonl \
+    --test_data_file=dataset/$lang/test.jsonl \
+    --codebase_file=dataset/$lang/codebase.jsonl \
     --num_train_epochs 10 \
     --code_length 256 \
     --data_flow_length 64 \
@@ -79,10 +79,10 @@ python run.py \
     --lang=$lang \
     --do_eval \
     --do_test \
-    --train_data_file=dataset/$1/train.jsonl \
-    --eval_data_file=dataset/$1/valid.jsonl \
-    --test_data_file=dataset/$1/test.jsonl \
-    --codebase_file=dataset/$1/codebase.jsonl \
+    --train_data_file=dataset/$lang/train.jsonl \
+    --eval_data_file=dataset/$lang/valid.jsonl \
+    --test_data_file=dataset/$lang/test.jsonl \
+    --codebase_file=dataset/$lang/codebase.jsonl \
     --num_train_epochs 10 \
     --code_length 256 \
     --data_flow_length 64 \

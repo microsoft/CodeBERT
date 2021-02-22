@@ -58,7 +58,17 @@ dfg_function={
     'javascript':DFG_javascript
 }
 
-                                        
+#load parsers
+parsers={}        
+for lang in dfg_function:
+    LANGUAGE = Language('parser/my-languages.so', lang)
+    parser = Parser()
+    parser.set_language(LANGUAGE) 
+    parser = [parser,dfg_function[lang]]    
+    parsers[lang]= parser
+    
+    
+#remove comments, tokenize code and extract dataflow                                        
 def extract_dataflow(code, parser,lang):
     #remove comments
     try:
@@ -115,30 +125,26 @@ class InputFeatures(object):
              url2
 
     ):
+        #The first code function
         self.input_tokens_1 = input_tokens_1
         self.input_ids_1 = input_ids_1
         self.position_idx_1=position_idx_1
         self.dfg_to_code_1=dfg_to_code_1
         self.dfg_to_dfg_1=dfg_to_dfg_1
         
+        #The second code function
         self.input_tokens_2 = input_tokens_2
         self.input_ids_2 = input_ids_2
         self.position_idx_2=position_idx_2
         self.dfg_to_code_2=dfg_to_code_2
         self.dfg_to_dfg_2=dfg_to_dfg_2
         
+        #label
         self.label=label
         self.url1=url1
         self.url2=url2
         
-parsers={}        
-for lang in dfg_function:
-    LANGUAGE = Language('parser/my-languages.so', lang)
-    parser = Parser()
-    parser.set_language(LANGUAGE) 
-    parser = [parser,dfg_function[lang]]    
-    parsers[lang]= parser
-    
+
 def convert_examples_to_features(item):
     #source
     url1,url2,label,tokenizer, args,cache,url_to_code=item
@@ -147,6 +153,8 @@ def convert_examples_to_features(item):
     for url in [url1,url2]:
         if url not in cache:
             func=url_to_code[url]
+            
+            #extract data flow
             code_tokens,dfg=extract_dataflow(func,parser,'java')
             code_tokens=[tokenizer.tokenize('@ '+x)[1:] if idx!=0 else tokenizer.tokenize(x) for idx,x in enumerate(code_tokens)]
             ori2cur_pos={}
@@ -154,12 +162,13 @@ def convert_examples_to_features(item):
             for i in range(len(code_tokens)):
                 ori2cur_pos[i]=(ori2cur_pos[i-1][1],ori2cur_pos[i-1][1]+len(code_tokens[i]))    
             code_tokens=[y for x in code_tokens for y in x]  
+            
             #truncating
-            code_tokens=code_tokens[:args.code_length+args.data_flow_length-2-min(len(dfg),args.data_flow_length)]
+            code_tokens=code_tokens[:args.code_length+args.data_flow_length-3-min(len(dfg),args.data_flow_length)][:512-3]
             source_tokens =[tokenizer.cls_token]+code_tokens+[tokenizer.sep_token]
             source_ids =  tokenizer.convert_tokens_to_ids(source_tokens)
             position_idx = [i+tokenizer.pad_token_id + 1 for i in range(len(source_tokens))]
-            dfg=dfg[:args.code_length+args.data_flow_length-len(code_tokens)]
+            dfg=dfg[:args.code_length+args.data_flow_length-len(source_tokens)]
             source_tokens+=[x[0] for x in dfg]
             position_idx+=[0 for x in dfg]
             source_ids+=[tokenizer.unk_token_id for x in dfg]
@@ -187,10 +196,12 @@ def convert_examples_to_features(item):
                      label,url1,url2)
 
 class TextDataset(Dataset):
-    def __init__(self, tokenizer, args, file_path='train', pool=None):
+    def __init__(self, tokenizer, args, file_path='train'):
         self.examples = []
         self.args=args
         index_filename=file_path
+        
+        #load index
         logger.info("Creating features from index file at %s ", index_filename)
         url_to_code={}
         with open('/'.join(index_filename.split('/')[:-1])+'/data.jsonl') as f:
@@ -198,7 +209,8 @@ class TextDataset(Dataset):
                 line=line.strip()
                 js=json.loads(line)
                 url_to_code[js['idx']]=js['func']
-
+                
+        #load code function according to index
         data=[]
         cache={}
         f=open(index_filename)
@@ -214,9 +226,13 @@ class TextDataset(Dataset):
                     label=1
                 data.append((url1,url2,label,tokenizer, args,cache,url_to_code))
                 
+        #only use 10% valid data to keep best model        
         if 'valid' in file_path:
             data=random.sample(data,int(len(data)*0.1))
+            
+        #convert example to input features    
         self.examples=[convert_examples_to_features(x) for x in tqdm(data,total=len(data))]
+        
         if 'train' in file_path:
             for idx, example in enumerate(self.examples[:3]):
                 logger.info("*** Example ***")
@@ -239,36 +255,47 @@ class TextDataset(Dataset):
         return len(self.examples)
     
     def __getitem__(self, item):
+        #calculate graph-guided masked function
         attn_mask_1= np.zeros((self.args.code_length+self.args.data_flow_length,
                         self.args.code_length+self.args.data_flow_length),dtype=np.bool)
+        #calculate begin index of node and max length of input
         node_index=sum([i>1 for i in self.examples[item].position_idx_1])
         max_length=sum([i!=1 for i in self.examples[item].position_idx_1])
+        #sequence can attend to sequence
         attn_mask_1[:node_index,:node_index]=True
+        #special tokens attend to all tokens
         for idx,i in enumerate(self.examples[item].input_ids_1):
             if i in [0,2]:
                 attn_mask_1[idx,:max_length]=True
+        #nodes attend to code tokens that are identified from
         for idx,(a,b) in enumerate(self.examples[item].dfg_to_code_1):
             if a<node_index and b<node_index:
                 attn_mask_1[idx+node_index,a:b]=True
                 attn_mask_1[a:b,idx+node_index]=True
+        #nodes attend to adjacent nodes 
         for idx,nodes in enumerate(self.examples[item].dfg_to_dfg_1):
             for a in nodes:
                 if a+node_index<len(self.examples[item].position_idx_1):
                     attn_mask_1[idx+node_index,a+node_index]=True  
                     
-
+        #calculate graph-guided masked function
         attn_mask_2= np.zeros((self.args.code_length+self.args.data_flow_length,
                         self.args.code_length+self.args.data_flow_length),dtype=np.bool)
+        #calculate begin index of node and max length of input
         node_index=sum([i>1 for i in self.examples[item].position_idx_2])
         max_length=sum([i!=1 for i in self.examples[item].position_idx_2])
+        #sequence can attend to sequence
         attn_mask_2[:node_index,:node_index]=True
+        #special tokens attend to all tokens
         for idx,i in enumerate(self.examples[item].input_ids_2):
             if i in [0,2]:
                 attn_mask_2[idx,:max_length]=True
+        #nodes attend to code tokens that are identified from
         for idx,(a,b) in enumerate(self.examples[item].dfg_to_code_2):
             if a<node_index and b<node_index:
                 attn_mask_2[idx+node_index,a:b]=True
                 attn_mask_2[a:b,idx+node_index]=True
+        #nodes attend to adjacent nodes 
         for idx,nodes in enumerate(self.examples[item].dfg_to_dfg_2):
             for a in nodes:
                 if a+node_index<len(self.examples[item].position_idx_2):
@@ -291,18 +318,18 @@ def set_seed(args):
         torch.cuda.manual_seed_all(args.seed)
 
 
-def train(args, train_dataset, model, tokenizer,pool):
+def train(args, train_dataset, model, tokenizer):
     """ Train the model """
-
-    train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
     
-    train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)
-    args.max_steps=args.epoch*len( train_dataloader)
+    #build dataloader
+    train_sampler = RandomSampler(train_dataset)
+    train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size,num_workers=4)
+    
+    args.max_steps=args.epochs*len( train_dataloader)
     args.save_steps=len( train_dataloader)//10
     args.warmup_steps=args.max_steps//5
-    args.logging_steps=len( train_dataloader)
-    args.num_train_epochs=args.epoch
     model.to(args.device)
+    
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ['bias', 'LayerNorm.weight']
     optimizer_grouped_parameters = [
@@ -313,43 +340,27 @@ def train(args, train_dataset, model, tokenizer,pool):
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps,
                                                 num_training_steps=args.max_steps)
-    if args.fp16:
-        try:
-            from apex import amp
-        except ImportError:
-            raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
-        model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16_opt_level)
 
-    # multi-gpu training (should be after apex fp16 initialization)
+    # multi-gpu training
     if args.n_gpu > 1:
         model = torch.nn.DataParallel(model)
-    
-    # Distributed training (should be after apex fp16 initialization)
-    if args.local_rank != -1:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank],
-                                                          output_device=args.local_rank,
-                                                          find_unused_parameters=True)
 
-    args.per_gpu_train_batch_size=args.train_batch_size//args.n_gpu
     # Train!
     logger.info("***** Running training *****")
     logger.info("  Num examples = %d", len(train_dataset))
-    logger.info("  Num Epochs = %d", args.num_train_epochs)
-    logger.info("  Instantaneous batch size per GPU = %d", args.per_gpu_train_batch_size)
-    logger.info("  Total train batch size (w. parallel, distributed & accumulation) = %d",
-                args.train_batch_size * args.gradient_accumulation_steps * (
-                    torch.distributed.get_world_size() if args.local_rank != -1 else 1))
+    logger.info("  Num Epochs = %d", args.epochs)
+    logger.info("  Instantaneous batch size per GPU = %d", args.train_batch_size//args.n_gpu)
+    logger.info("  Total train batch size = %d",args.train_batch_size*args.gradient_accumulation_steps)
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", args.max_steps)
     
     global_step=0
     tr_loss, logging_loss,avg_loss,tr_nb,tr_num,train_loss = 0.0, 0.0,0.0,0,0,0
-    best_mrr=0.0
     best_f1=0
-    # model.resize_token_embeddings(len(tokenizer))
+
     model.zero_grad()
  
-    for idx in range(int(args.num_train_epochs)): 
+    for idx in range(args.epochs): 
         bar = tqdm(train_dataloader,total=len(train_dataloader))
         tr_num=0
         train_loss=0
@@ -360,29 +371,24 @@ def train(args, train_dataset, model, tokenizer,pool):
             model.train()
             loss,logits = model(inputs_ids_1,position_idx_1,attn_mask_1,inputs_ids_2,position_idx_2,attn_mask_2,labels)
 
-
             if args.n_gpu > 1:
-                loss = loss.mean()  # mean() to average on multi-gpu parallel training
+                loss = loss.mean()
+                
             if args.gradient_accumulation_steps > 1:
                 loss = loss / args.gradient_accumulation_steps
 
-            if args.fp16:
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
-                torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
-            else:
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
             tr_loss += loss.item()
             tr_num+=1
             train_loss+=loss.item()
             if avg_loss==0:
                 avg_loss=tr_loss
+                
             avg_loss=round(train_loss/tr_num,5)
             bar.set_description("epoch {} loss {}".format(idx,avg_loss))
-
-                
+              
             if (step + 1) % args.gradient_accumulation_steps == 0:
                 optimizer.step()
                 optimizer.zero_grad()
@@ -390,16 +396,11 @@ def train(args, train_dataset, model, tokenizer,pool):
                 global_step += 1
                 output_flag=True
                 avg_loss=round(np.exp((tr_loss - logging_loss) /(global_step- tr_nb)),4)
-                if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
-                    logging_loss = tr_loss
-                    tr_nb=global_step
 
-                if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
+                if global_step % args.save_steps == 0:
+                    results = evaluate(args, model, tokenizer, eval_when_training=True)    
                     
-                    if args.local_rank == -1 and args.evaluate_during_training:  # Only evaluate when single GPU otherwise metrics may not average well
-                        results = evaluate(args, model, tokenizer,pool=pool,eval_when_training=True)                 
-                        # Save model checkpoint
-
+                    # Save model checkpoint
                     if results['eval_f1']>best_f1:
                         best_f1=results['eval_f1']
                         logger.info("  "+"*"*20)  
@@ -415,28 +416,21 @@ def train(args, train_dataset, model, tokenizer,pool):
                         torch.save(model_to_save.state_dict(), output_dir)
                         logger.info("Saving model checkpoint to %s", output_dir)
                         
-        if args.max_steps > 0 and global_step > args.max_steps:
-            break
-
-def evaluate(args, model, tokenizer, prefix="",pool=None,eval_when_training=False):
-    # Loop to handle MNLI double evaluation (matched, mis-matched)
-    eval_output_dir = args.output_dir
-    eval_dataset = TextDataset(tokenizer, args, file_path=args.eval_data_file,pool=pool)
-    if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
-        os.makedirs(eval_output_dir)
-
-    # Note that DistributedSampler samples randomly
-    eval_sampler = SequentialSampler(eval_dataset) if args.local_rank == -1 else DistributedSampler(eval_dataset)
-    eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=4,pin_memory=True)
+def evaluate(args, model, tokenizer, eval_when_training=False):
+    #build dataloader
+    eval_dataset = TextDataset(tokenizer, args, file_path=args.eval_data_file)
+    eval_sampler = SequentialSampler(eval_dataset)
+    eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler,batch_size=args.eval_batch_size,num_workers=4)
 
     # multi-gpu evaluate
     if args.n_gpu > 1 and eval_when_training is False:
         model = torch.nn.DataParallel(model)
 
     # Eval!
-    logger.info("***** Running evaluation {} *****".format(prefix))
+    logger.info("***** Running evaluation *****")
     logger.info("  Num examples = %d", len(eval_dataset))
     logger.info("  Batch size = %d", args.eval_batch_size)
+    
     eval_loss = 0.0
     nb_eval_steps = 0
     model.eval()
@@ -452,6 +446,8 @@ def evaluate(args, model, tokenizer, prefix="",pool=None,eval_when_training=Fals
             logits.append(logit.cpu().numpy())
             y_trues.append(labels.cpu().numpy())
         nb_eval_steps += 1
+    
+    #calculate scores
     logits=np.concatenate(logits,0)
     y_trues=np.concatenate(y_trues,0)
     best_threshold=0.5
@@ -472,26 +468,24 @@ def evaluate(args, model, tokenizer, prefix="",pool=None,eval_when_training=Fals
         
     }
 
-    logger.info("***** Eval results {} *****".format(prefix))
+    logger.info("***** Eval results *****")
     for key in sorted(result.keys()):
         logger.info("  %s = %s", key, str(round(result[key],4)))
 
     return result
 
-def test(args, model, tokenizer, prefix="",pool=None,best_threshold=0):
-    # Loop to handle MNLI double evaluation (matched, mis-matched)
-    eval_dataset = TextDataset(tokenizer, args, file_path=args.test_data_file,pool=pool)
-
-    # Note that DistributedSampler samples randomly
-    eval_sampler = SequentialSampler(eval_dataset) if args.local_rank == -1 else DistributedSampler(eval_dataset)
-    eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=4,pin_memory=True)
+def test(args, model, tokenizer, best_threshold=0):
+    #build dataloader
+    eval_dataset = TextDataset(tokenizer, args, file_path=args.test_data_file)
+    eval_sampler = SequentialSampler(eval_dataset)
+    eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=4)
 
     # multi-gpu evaluate
     if args.n_gpu > 1:
         model = torch.nn.DataParallel(model)
 
     # Eval!
-    logger.info("***** Running Test {} *****".format(prefix))
+    logger.info("***** Running Test *****")
     logger.info("  Num examples = %d", len(eval_dataset))
     logger.info("  Batch size = %d", args.eval_batch_size)
     eval_loss = 0.0
@@ -509,6 +503,8 @@ def test(args, model, tokenizer, prefix="",pool=None,best_threshold=0):
             logits.append(logit.cpu().numpy())
             y_trues.append(labels.cpu().numpy())
         nb_eval_steps += 1
+    
+    #output result
     logits=np.concatenate(logits,0)
     y_preds=logits[:,1]>best_threshold
     with open(os.path.join(args.output_dir,"predictions.txt"),'w') as f:
@@ -553,8 +549,6 @@ def main():
                         help="Whether to run eval on the dev set.")    
     parser.add_argument("--evaluate_during_training", action='store_true',
                         help="Run evaluation during training at each logging step.")
-    parser.add_argument("--do_lower_case", action='store_true',
-                        help="Set this flag if you are using an uncased model.")
 
     parser.add_argument("--train_batch_size", default=4, type=int,
                         help="Batch size per GPU/CPU for training.")
@@ -570,8 +564,6 @@ def main():
                         help="Epsilon for Adam optimizer.")
     parser.add_argument("--max_grad_norm", default=1.0, type=float,
                         help="Max gradient norm.")
-    parser.add_argument("--num_train_epochs", default=1.0, type=float,
-                        help="Total number of training epochs to perform.")
     parser.add_argument("--max_steps", default=-1, type=int,
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.")
     parser.add_argument("--warmup_steps", default=0, type=int,
@@ -579,17 +571,13 @@ def main():
 
     parser.add_argument('--seed', type=int, default=42,
                         help="random seed for initialization")
-    parser.add_argument('--epoch', type=int, default=42,
-                        help="random seed for initialization")
+    parser.add_argument('--epochs', type=int, default=1,
+                        help="training epochs")
 
-
-    
-    pool = multiprocessing.Pool(cpu_cont)
     args = parser.parse_args()
-    
-  
+
     # Setup CUDA, GPU
-    device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     args.n_gpu = torch.cuda.device_count()
 
     args.device = device
@@ -610,24 +598,24 @@ def main():
     logger.info("Training/evaluation parameters %s", args)
     # Training
     if args.do_train:
-        train_dataset = TextDataset(tokenizer, args, file_path=args.train_data_file,pool=pool)
-        train(args, train_dataset, model, tokenizer,pool)
+        train_dataset = TextDataset(tokenizer, args, file_path=args.train_data_file)
+        train(args, train_dataset, model, tokenizer)
 
     # Evaluation
     results = {}
-    if args.do_eval and args.local_rank in [-1, 0]:
+    if args.do_eval:
         checkpoint_prefix = 'checkpoint-best-f1/model.bin'
         output_dir = os.path.join(args.output_dir, '{}'.format(checkpoint_prefix))  
         model.load_state_dict(torch.load(output_dir))
         model.to(args.device)
-        result=evaluate(args, model, tokenizer,pool=pool)
+        result=evaluate(args, model, tokenizer)
         
-    if args.do_test and args.local_rank in [-1, 0]:
+    if args.do_test:
         checkpoint_prefix = 'checkpoint-best-f1/model.bin'
         output_dir = os.path.join(args.output_dir, '{}'.format(checkpoint_prefix))  
         model.load_state_dict(torch.load(output_dir))
         model.to(args.device)
-        test(args, model, tokenizer,pool=pool,best_threshold=0.5)
+        test(args, model, tokenizer,best_threshold=0.5)
 
     return results
 

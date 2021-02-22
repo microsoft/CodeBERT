@@ -54,6 +54,17 @@ dfg_function={
     'javascript':DFG_javascript
 }
 
+#load parsers
+parsers={}        
+for lang in dfg_function:
+    LANGUAGE = Language('parser/my-languages.so', lang)
+    parser = Parser()
+    parser.set_language(LANGUAGE) 
+    parser = [parser,dfg_function[lang]]    
+    parsers[lang]= parser
+    
+    
+#remove comments, tokenize code and extract dataflow                                        
 def extract_dataflow(code, parser,lang):
     #remove comments
     try:
@@ -114,18 +125,12 @@ class InputFeatures(object):
         self.nl_ids = nl_ids
         self.url=url
         
-parsers={}        
-for lang in dfg_function:
-    LANGUAGE = Language('parser/my-languages.so', lang)
-    parser = Parser()
-    parser.set_language(LANGUAGE) 
-    parser = [parser,dfg_function[lang]]    
-    parsers[lang]= parser
         
 def convert_examples_to_features(item):
     js,tokenizer,args=item
     #code
     parser=parsers[args.lang]
+    #extract data flow
     code_tokens,dfg=extract_dataflow(js['original_string'],parser,args.lang)
     code_tokens=[tokenizer.tokenize('@ '+x)[1:] if idx!=0 else tokenizer.tokenize(x) for idx,x in enumerate(code_tokens)]
     ori2cur_pos={}
@@ -155,7 +160,7 @@ def convert_examples_to_features(item):
     dfg_to_code=[ori2cur_pos[x[1]] for x in dfg]
     length=len([tokenizer.cls_token])
     dfg_to_code=[(x[0]+length,x[1]+length) for x in dfg_to_code]        
-    
+    #nl
     nl=' '.join(js['docstring_tokens'])
     nl_tokens=tokenizer.tokenize(nl)[:args.nl_length-2]
     nl_tokens =[tokenizer.cls_token]+nl_tokens+[tokenizer.sep_token]
@@ -198,19 +203,25 @@ class TextDataset(Dataset):
     def __len__(self):
         return len(self.examples)
 
-    def __getitem__(self, item):  
+    def __getitem__(self, item): 
+        #calculate graph-guided masked function
         attn_mask=np.zeros((self.args.code_length+self.args.data_flow_length,
                             self.args.code_length+self.args.data_flow_length),dtype=np.bool)
+        #calculate begin index of node and max length of input
         node_index=sum([i>1 for i in self.examples[item].position_idx])
         max_length=sum([i!=1 for i in self.examples[item].position_idx])
+        #sequence can attend to sequence
         attn_mask[:node_index,:node_index]=True
+        #special tokens attend to all tokens
         for idx,i in enumerate(self.examples[item].code_ids):
             if i in [0,2]:
                 attn_mask[idx,:max_length]=True
+        #nodes attend to code tokens that are identified from
         for idx,(a,b) in enumerate(self.examples[item].dfg_to_code):
             if a<node_index and b<node_index:
                 attn_mask[idx+node_index,a:b]=True
                 attn_mask[a:b,idx+node_index]=True
+        #nodes attend to adjacent nodes 
         for idx,nodes in enumerate(self.examples[item].dfg_to_dfg):
             for a in nodes:
                 if a+node_index<len(self.examples[item].position_idx):

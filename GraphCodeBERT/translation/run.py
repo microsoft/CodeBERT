@@ -61,7 +61,16 @@ dfg_function={
 }
 
 logger = logging.getLogger(__name__)
+#load parsers
+parsers={}        
+for lang in dfg_function:
+    LANGUAGE = Language('parser/my-languages.so', lang)
+    parser = Parser()
+    parser.set_language(LANGUAGE) 
+    parser = [parser,dfg_function[lang]]    
+    parsers[lang]= parser
     
+#remove comments, tokenize code and extract dataflow     
 def extract_dataflow(code, parser,lang):
     #remove comments
     try:
@@ -169,18 +178,17 @@ for lang in dfg_function:
 def convert_examples_to_features(examples, tokenizer, args,stage=None):
     features = []
     for example_index, example in enumerate(tqdm(examples,total=len(examples))):
-        #source
-        code_tokens,dfg=extract_dataflow(example.source,parsers[example.lang],example.lang)
+        ##extract data flow
+        code_tokens,dfg=extract_dataflow(example.source,parsers['java'],'java')
         code_tokens=[tokenizer.tokenize('@ '+x)[1:] if idx!=0 else tokenizer.tokenize(x) for idx,x in enumerate(code_tokens)]
-        
-        
         ori2cur_pos={}
         ori2cur_pos[-1]=(0,0)
         for i in range(len(code_tokens)):
             ori2cur_pos[i]=(ori2cur_pos[i-1][1],ori2cur_pos[i-1][1]+len(code_tokens[i]))    
         code_tokens=[y for x in code_tokens for y in x]  
+        
         #truncating
-        code_tokens=code_tokens[:args.max_source_length-3-min(len(dfg),0)]
+        code_tokens=code_tokens[:args.max_source_length-3-min(len(dfg),0)][:512-3]
         source_tokens =[tokenizer.cls_token]+code_tokens+[tokenizer.sep_token]
         source_ids =  tokenizer.convert_tokens_to_ids(source_tokens)
         position_idx = [i+tokenizer.pad_token_id + 1 for i in range(len(source_tokens))]
@@ -204,6 +212,7 @@ def convert_examples_to_features(examples, tokenizer, args,stage=None):
         dfg_to_code=[ori2cur_pos[x[1]] for x in dfg]
         length=len([tokenizer.cls_token])
         dfg_to_code=[(x[0]+length,x[1]+length) for x in dfg_to_code]        
+      
 
         #target
         if stage=="test":
@@ -254,17 +263,23 @@ class TextDataset(Dataset):
         return len(self.examples)
     
     def __getitem__(self, item):
+        #calculate graph-guided masked function
         attn_mask=np.zeros((self.args.max_source_length,self.args.max_source_length),dtype=np.bool)
+        #calculate begin index of node and max length of input
         node_index=sum([i>1 for i in self.examples[item].position_idx])
         max_length=sum([i!=1 for i in self.examples[item].position_idx])
+        #sequence can attend to sequence
         attn_mask[:node_index,:node_index]=True
+        #special tokens attend to all tokens
         for idx,i in enumerate(self.examples[item].source_ids):
             if i in [0,2]:
                 attn_mask[idx,:max_length]=True
+        #nodes attend to code tokens that are identified from
         for idx,(a,b) in enumerate(self.examples[item].dfg_to_code):
             if a<node_index and b<node_index:
                 attn_mask[idx+node_index,a:b]=True
                 attn_mask[a:b,idx+node_index]=True
+        #nodes attend to adjacent nodes         
         for idx,nodes in enumerate(self.examples[item].dfg_to_dfg):
             for a in nodes:
                 if a+node_index<len(self.examples[item].position_idx):
@@ -361,20 +376,14 @@ def main():
     args = parser.parse_args()
     logger.info(args)
 
-    # Setup CUDA, GPU & distributed training
-    if args.local_rank == -1 or args.no_cuda:
-        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-        args.n_gpu = torch.cuda.device_count()
-    else:  # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-        torch.cuda.set_device(args.local_rank)
-        device = torch.device("cuda", args.local_rank)
-        torch.distributed.init_process_group(backend='nccl')
-        args.n_gpu = 1
-    logger.warning("Process rank: %s, device: %s, n_gpu: %s, distributed training: %s",
-                    args.local_rank, device, args.n_gpu, bool(args.local_rank != -1))
+    # Setup CUDA, GPU
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    args.n_gpu = torch.cuda.device_count()
     args.device = device
+    
     # Set seed
     set_seed(args.seed)
+    
     # make dir if output_dir not exist
     if os.path.exists(args.output_dir) is False:
         os.makedirs(args.output_dir)
@@ -390,20 +399,13 @@ def main():
     model=Seq2Seq(encoder=encoder,decoder=decoder,config=config,
                   beam_size=args.beam_size,max_length=args.max_target_length,
                   sos_id=tokenizer.cls_token_id,eos_id=tokenizer.sep_token_id)
+    
     if args.load_model_path is not None:
         logger.info("reload model from {}".format(args.load_model_path))
         model.load_state_dict(torch.load(args.load_model_path))
         
     model.to(device)
-    if args.local_rank != -1:
-        # Distributed training
-        try:
-            from apex.parallel import DistributedDataParallel as DDP
-        except ImportError:
-            raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
-
-        model = DDP(model)
-    elif args.n_gpu > 1:
+    if args.n_gpu > 1:
         # multi-gpu training
         model = torch.nn.DataParallel(model)
 
@@ -412,12 +414,8 @@ def main():
         train_examples = read_examples(args.train_filename)
         train_features = convert_examples_to_features(train_examples, tokenizer,args,stage='train')
         train_data = TextDataset(train_features,args)
-        
-        if args.local_rank == -1:
-            train_sampler = RandomSampler(train_data)
-        else:
-            train_sampler = DistributedSampler(train_data)
-        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size//args.gradient_accumulation_steps)
+        train_sampler = RandomSampler(train_data)
+        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size//args.gradient_accumulation_steps,num_workers=4)
 
         num_train_optimization_steps =  args.train_steps
 
@@ -437,7 +435,6 @@ def main():
         logger.info("  Batch size = %d", args.train_batch_size)
         logger.info("  Num epoch = %d", args.num_train_epochs)
         
-
         model.train()
         dev_dataset={}
         nb_tr_examples, nb_tr_steps,tr_loss,global_step,best_bleu,best_loss = 0, 0,0,0,0,1e6 
@@ -452,6 +449,7 @@ def main():
                     loss = loss.mean() # mean() to average on multi-gpu.
                 if args.gradient_accumulation_steps > 1:
                     loss = loss / args.gradient_accumulation_steps
+                    
                 tr_loss += loss.item()
                 train_loss=round(tr_loss*args.gradient_accumulation_steps/(nb_tr_steps+1),4)
                 bar.set_description("epoch {} loss {}".format(epoch,train_loss))
@@ -479,7 +477,7 @@ def main():
                     eval_data = TextDataset(eval_features,args)
                     dev_dataset['dev_loss']=eval_examples,eval_data
                 eval_sampler = SequentialSampler(eval_data)
-                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
+                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=4)
 
                 logger.info("\n***** Running evaluation *****")
                 logger.info("  Num examples = %d", len(eval_examples))
@@ -535,10 +533,8 @@ def main():
                     eval_data = TextDataset(eval_features,args)
                     dev_dataset['dev_bleu']=eval_examples,eval_data
 
-
-
                 eval_sampler = SequentialSampler(eval_data)
-                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
+                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=4)
                 model.eval() 
                 p=[]
                 for batch in eval_dataloader:
@@ -594,7 +590,7 @@ def main():
 
             # Calculate bleu
             eval_sampler = SequentialSampler(eval_data)
-            eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
+            eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=4)
 
             model.eval() 
             p=[]
@@ -624,14 +620,6 @@ def main():
             logger.info("  %s = %s "%("bleu-4",str(dev_bleu)))
             logger.info("  %s = %s "%("xMatch",str(round(np.mean(accs)*100,4))))
             logger.info("  "+"*"*20)   
-
-
-
-                            
-
-                
-                
+            
 if __name__ == "__main__":
     main()
-
-

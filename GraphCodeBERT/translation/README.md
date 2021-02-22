@@ -34,13 +34,12 @@ Data statistics of the dataset are shown in the below table:
 
 ### Dependency
 
-- python 3.6 or 3.7
-- torch==1.4.0
-- transformers>=2.5.0
-- pip install scikit-learn
+- pip install torch
+- pip install transformers
+- pip install tree_sitter
 
 ### Fine-tune
-Taking Java to C# translation as example:
+We use 4*V100-16G to fine-tune. Taking Java to C# translation as example:
 
 ```shell
 source=java
@@ -51,8 +50,8 @@ beam_size=10
 source_length=320
 target_length=256
 output_dir=saved_models/$source-$target/
-train_file=translation/data/train.java-cs.txt.$source,translation/data/train.java-cs.txt.$target
-dev_file=translation/data/valid.java-cs.txt.$source,translation/data/valid.java-cs.txt.$target
+train_file=data/train.java-cs.txt.$source,data/train.java-cs.txt.$target
+dev_file=data/valid.java-cs.txt.$source,data/valid.java-cs.txt.$target
 epochs=100
 pretrained_model=microsoft/graphcodebert-base
 
@@ -70,7 +69,7 @@ dev_file=data/valid.java-cs.txt.$source,data/valid.java-cs.txt.$target
 test_file=data/test.java-cs.txt.$source,data/test.java-cs.txt.$target
 load_model_path=$output_dir/checkpoint-best-bleu/pytorch_model.bin #checkpoint for test
 
-python -m run.py --do_test --model_type roberta --model_name_or_path $pretrained_model --tokenizer_name microsoft/graphcodebert-base --config_name microsoft/graphcodebert-base --load_model_path $load_model_path --dev_filename $dev_file --test_filename $test_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --eval_batch_size $batch_size 2>&1| tee $output_dir/test.log
+python run.py --do_test --model_type roberta --model_name_or_path $pretrained_model --tokenizer_name microsoft/graphcodebert-base --config_name microsoft/graphcodebert-base --load_model_path $load_model_path --dev_filename $dev_file --test_filename $test_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --eval_batch_size $batch_size 2>&1| tee $output_dir/test.log
 ```
 
 

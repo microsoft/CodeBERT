@@ -1,4 +1,4 @@
-# CodeXGLUE -- Clone Detection (BCB)
+# Clone Detection
 
 ## Task Definition
 
@@ -59,16 +59,17 @@ A predications file that has predictions in TXT format, such as evaluator/predic
 
 ## Pipeline-GraphCodeBERT
 
-We also provide a pipeline that fine-tunes [CodeBERT](https://arxiv.org/pdf/2002.08155.pdf) on this task. 
+We also provide a pipeline that fine-tunes GraphCodeBERT on this task. 
 ### Dependency
 
 - pip install torch
 - pip install transformers
 - pip install tree_sitter
+- pip sklearn
 
 ### Fine-tune
 
-We only use training data to fine-tune and 10% valid data to evaluate.
+We use 4*V100-16G to fine-tune and 10% valid data to evaluate.
 
 
 ```shell

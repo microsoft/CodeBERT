@@ -39,7 +39,7 @@ Data statistics of this dataset are shown in the below table:
 - pip install tree_sitter
 
 ### Fine-tune
-Taking the "small" subset as example:
+We use 4*V100-16G to fine-tune. Taking the "small" subset as example:
 
 ```shell
 scale=small
@@ -55,7 +55,7 @@ epochs=50
 pretrained_model=microsoft/graphcodebert-base
 
 mkdir -p $output_dir
-python -m refinement.run --do_train --do_eval --model_type roberta --model_name_or_path $pretrained_model --tokenizer_name microsoft/graphcodebert-base --config_name microsoft/graphcodebert-base --train_filename $train_file --dev_filename $dev_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --train_batch_size $batch_size --eval_batch_size $batch_size --learning_rate $lr --num_train_epochs $epochs 2>&1| tee $output_dir/train.log
+python run.py --do_train --do_eval --model_type roberta --model_name_or_path $pretrained_model --tokenizer_name microsoft/graphcodebert-base --config_name microsoft/graphcodebert-base --train_filename $train_file --dev_filename $dev_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --train_batch_size $batch_size --eval_batch_size $batch_size --learning_rate $lr --num_train_epochs $epochs 2>&1| tee $output_dir/train.log
 ```
 
 ### Inference
