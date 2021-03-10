@@ -67,6 +67,16 @@ We also provide a pipeline that fine-tunes GraphCodeBERT on this task.
 - pip install tree_sitter
 - pip sklearn
 
+### Tree-sitter (optional)
+
+If the built file "parser/my-languages.so" doesn't work for you, please rebuild as the following command:
+
+```shell
+cd parser
+bash build.sh
+cd ..
+```
+
 ### Fine-tune
 
 We use 4*V100-16G to fine-tune and 10% valid data to evaluate.

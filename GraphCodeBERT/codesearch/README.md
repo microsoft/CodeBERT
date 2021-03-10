@@ -41,6 +41,16 @@ cd ..
 - pip install transformers
 - pip install tree_sitter
 
+### Tree-sitter (optional)
+
+If the built file "parser/my-languages.so" doesn't work for you, please rebuild as the following command:
+
+```shell
+cd parser
+bash build.sh
+cd ..
+```
+
 ## Fine-Tune
 
 We fine-tuned the model on 2*V100-16G GPUs. 

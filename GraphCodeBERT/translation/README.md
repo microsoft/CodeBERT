@@ -38,6 +38,16 @@ Data statistics of the dataset are shown in the below table:
 - pip install transformers
 - pip install tree_sitter
 
+### Tree-sitter (optional)
+
+If the built file "parser/my-languages.so" doesn't work for you, please rebuild as the following command:
+
+```shell
+cd parser
+bash build.sh
+cd ..
+```
+
 ### Fine-tune
 We use 4*V100-16G to fine-tune. Taking Java to C# translation as example:
 
