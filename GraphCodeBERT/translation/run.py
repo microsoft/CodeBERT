@@ -188,7 +188,7 @@ def convert_examples_to_features(examples, tokenizer, args,stage=None):
         code_tokens=[y for x in code_tokens for y in x]  
         
         #truncating
-        code_tokens=code_tokens[:args.max_source_length-3-min(len(dfg),0)][:512-3]
+        code_tokens=code_tokens[:args.max_source_length-3][:512-3]
         source_tokens =[tokenizer.cls_token]+code_tokens+[tokenizer.sep_token]
         source_ids =  tokenizer.convert_tokens_to_ids(source_tokens)
         position_idx = [i+tokenizer.pad_token_id + 1 for i in range(len(source_tokens))]
