@@ -58,7 +58,7 @@ python run_classifier.py \
 --model_name_or_path microsoft/codebert-base \
 --task_name codesearch \
 --do_predict \
---output_dir ../data/codesearch/test/$lang \
+--output_dir ./models/$lang \
 --data_dir ../data/codesearch/test/$lang \
 --max_seq_length 200 \
 --per_gpu_train_batch_size 32 \
@@ -66,7 +66,7 @@ python run_classifier.py \
 --learning_rate 1e-5 \
 --num_train_epochs 8 \
 --test_file batch_${idx}.txt \
---pred_model_dir ./models/$lang/checkpoint-best/pytorch-model.bin \
+--pred_model_dir ./models/$lang/checkpoint-best/ \
 --test_result_dir ./results/$lang/${idx}_batch_result.txt
 ```
 
