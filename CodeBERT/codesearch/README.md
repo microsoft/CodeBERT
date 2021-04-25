@@ -66,7 +66,7 @@ python run_classifier.py \
 --learning_rate 1e-5 \
 --num_train_epochs 8 \
 --test_file batch_${idx}.txt \
---pred_model_dir ./models/$lang/checkpoint-best/ \
+--pred_model_dir ./models/$lang/checkpoint-best/pytorch-model.bin \
 --test_result_dir ./results/$lang/${idx}_batch_result.txt
 ```
 
