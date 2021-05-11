@@ -94,4 +94,4 @@ For downstream tasks like code search, clone detection, code refinement and code
 
 ## Contact
 
-Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn) and Duyu Tang (dutang@microsoft.com) if you have any further questions.
+Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn)， Duyu Tang (dutang@microsoft.com)，Shuai Lu (v-shuailu@microsoft.com) and Nan Duan (nanduan@microsoft.com) if you have any further questions.
