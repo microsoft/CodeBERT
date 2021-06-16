@@ -6,7 +6,7 @@ This repo provides the code for reproducing the experiments in [CodeBERT: A Pre-
 - pip install torch
 - pip install transformers
 
-### Qiuck Tour
+### Quick Tour
 We use huggingface/transformers framework to train the model. You can use our model like the pre-trained Roberta base. Now, We give an example on how to load the model.
 ```python
 import torch
