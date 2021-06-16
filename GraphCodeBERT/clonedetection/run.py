@@ -349,7 +349,7 @@ def train(args, train_dataset, model, tokenizer):
     logger.info("***** Running training *****")
     logger.info("  Num examples = %d", len(train_dataset))
     logger.info("  Num Epochs = %d", args.epochs)
-    logger.info("  Instantaneous batch size per GPU = %d", args.train_batch_size//args.n_gpu)
+    logger.info("  Instantaneous batch size per GPU = %d", args.train_batch_size//max(args.n_gpu, 1))
     logger.info("  Total train batch size = %d",args.train_batch_size*args.gradient_accumulation_steps)
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", args.max_steps)
