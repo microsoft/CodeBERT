@@ -52,8 +52,8 @@ cd ..
 We use 4*V100-16G to fine-tune. Taking Java to C# translation as example:
 
 ```shell
-source=cs
-target=java
+source=java
+target=cs
 lr=1e-4
 batch_size=32
 beam_size=10
