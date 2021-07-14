@@ -179,7 +179,9 @@ def convert_examples_to_features(examples, tokenizer, args,stage=None):
     features = []
     for example_index, example in enumerate(tqdm(examples,total=len(examples))):
         ##extract data flow
-        code_tokens,dfg=extract_dataflow(example.source,parsers['java'],'java')
+        code_tokens,dfg=extract_dataflow(example.source,
+                                         parsers["c_sharp" if args.source_lang == "cs" else "java"],
+                                         "c_sharp" if args.source_lang == "cs" else "java")
         code_tokens=[tokenizer.tokenize('@ '+x)[1:] if idx!=0 else tokenizer.tokenize(x) for idx,x in enumerate(code_tokens)]
         ori2cur_pos={}
         ori2cur_pos[-1]=(0,0)
@@ -319,7 +321,9 @@ def main():
                         help="The dev filename. Should contain the .jsonl files for this task.")
     parser.add_argument("--test_filename", default=None, type=str, 
                         help="The test filename. Should contain the .jsonl files for this task.")  
-    
+
+    parser.add_argument("--source_lang", default=None, type=str, 
+                        help="The language of input")  
     parser.add_argument("--config_name", default="", type=str,
                         help="Pretrained config name or path if not the same as model_name")
     parser.add_argument("--tokenizer_name", default="", type=str,
@@ -623,3 +627,4 @@ def main():
             
 if __name__ == "__main__":
     main()
+
