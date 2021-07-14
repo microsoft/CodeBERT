@@ -25,10 +25,10 @@ unzip data.zip
 Data statistics of the dataset are shown in the below table:
 
 |       | #Examples |
-| ------- | :-------: |
-|  Train  |   10,300  |
-|  Valid  |      500   |
-|   Test  |    1,000  |
+| ----- | :-------: |
+| Train |  10,300   |
+| Valid |    500    |
+| Test  |   1,000   |
 
 ## Pipeline-GraphCodeBERT
 
@@ -52,8 +52,8 @@ cd ..
 We use 4*V100-16G to fine-tune. Taking Java to C# translation as example:
 
 ```shell
-source=java
-target=cs
+source=cs
+target=java
 lr=1e-4
 batch_size=32
 beam_size=10
@@ -66,7 +66,24 @@ epochs=100
 pretrained_model=microsoft/graphcodebert-base
 
 mkdir -p $output_dir
-python run.py --do_train --do_eval --model_type roberta --model_name_or_path $pretrained_model --tokenizer_name microsoft/graphcodebert-base --config_name microsoft/graphcodebert-base --train_filename $train_file --dev_filename $dev_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --train_batch_size $batch_size --eval_batch_size $batch_size --learning_rate $lr --num_train_epochs $epochs 2>&1| tee $output_dir/train.log
+python run.py \
+--do_train \
+--do_eval \
+--model_type roberta \
+--source_lang $source \
+--model_name_or_path $pretrained_model \
+--tokenizer_name microsoft/graphcodebert-base \
+--config_name microsoft/graphcodebert-base \
+--train_filename $train_file \
+--dev_filename $dev_file \
+--output_dir $output_dir \
+--max_source_length $source_length \
+--max_target_length $target_length \
+--beam_size $beam_size \
+--train_batch_size $batch_size \
+--eval_batch_size $batch_size \
+--learning_rate $lr \
+--num_train_epochs $epochs 2>&1| tee $output_dir/train.log
 ```
 
 ### Inference
@@ -79,7 +96,21 @@ dev_file=data/valid.java-cs.txt.$source,data/valid.java-cs.txt.$target
 test_file=data/test.java-cs.txt.$source,data/test.java-cs.txt.$target
 load_model_path=$output_dir/checkpoint-best-bleu/pytorch_model.bin #checkpoint for test
 
-python run.py --do_test --model_type roberta --model_name_or_path $pretrained_model --tokenizer_name microsoft/graphcodebert-base --config_name microsoft/graphcodebert-base --load_model_path $load_model_path --dev_filename $dev_file --test_filename $test_file --output_dir $output_dir --max_source_length $source_length --max_target_length $target_length --beam_size $beam_size --eval_batch_size $batch_size 2>&1| tee $output_dir/test.log
+python run.py \
+--do_test \
+--model_type roberta \
+--source_lang $source \
+--model_name_or_path $pretrained_model \
+--tokenizer_name microsoft/graphcodebert-base \
+--config_name microsoft/graphcodebert-base \
+--load_model_path $load_model_path \
+--dev_filename $dev_file \
+--test_filename $test_file \
+--output_dir $output_dir \
+--max_source_length $source_length \
+--max_target_length $target_length \
+--beam_size $beam_size \
+--eval_batch_size $batch_size 2>&1| tee $output_dir/test.log
 ```
 
 
@@ -90,14 +121,14 @@ The results on the test set are shown as below:
 
 Java to C#:
 
-|     Method     |    BLEU    | Acc (100%) |
-|    ----------  | :--------: | :-------:  |
-| Naive copy     |   18.54    |    0.0     |
-| PBSMT      	 |   43.53    |   12.5     |
-| Transformer    |   55.84    |   33.0     |
-| Roborta (code) |   77.46    |   56.1     |
-| CodeBERT   	 | 79.92 | 59.0   |
-| GraphCodeBERT | **80.58** | **59.4** |
+| Method         |   BLEU    | Acc (100%) |
+| -------------- | :-------: | :--------: |
+| Naive copy     |   18.54   |    0.0     |
+| PBSMT          |   43.53   |    12.5    |
+| Transformer    |   55.84   |    33.0    |
+| Roborta (code) |   77.46   |    56.1    |
+| CodeBERT       |   79.92   |    59.0    |
+| GraphCodeBERT  | **80.58** |  **59.4**  |
 
 C# to Java:
 
@@ -109,4 +140,3 @@ C# to Java:
 | Roborta (code) |   71.99   |    57.9    |
 | CodeBERT       |   72.14   |    58.0    |
 | GraphCodeBERT  | **72.64** |  **58.8**  |
-
