@@ -117,3 +117,7 @@ The results on the filtered dataset are shown in this Table:
 | RoBERTa (code) |   0.628   |   0.562    |   0.859   |   0.610   |   0.620   |   0.579   |   0.643   |
 | CodeBERT       |   0.679   |   0.620    |   0.882   |   0.672   |   0.676   |   0.628   |   0.693   |
 | GraphCodeBERT  | **0.703** | **0.644**  | **0.897** | **0.692** | **0.691** | **0.649** | **0.713** |
+
+
+## Model and Demo
+A pretrained model, additional training script with dataset, and demo of a finetuned CodeBERT model for the task of Code Search can be found here: https://drive.google.com/file/d/1ZO-xVIzGcNE6Gz9DEg2z5mIbBv4Ft1cK/view.
