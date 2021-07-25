@@ -75,5 +75,3 @@ Evaluation
 python mrr.py
 ```
 
-## Model and Demo
-A pretrained model, additional training script with dataset, and demo of a finetuned CodeBERT model for the task of Code Search can be found here: https://drive.google.com/file/d/1ZO-xVIzGcNE6Gz9DEg2z5mIbBv4Ft1cK/view.
