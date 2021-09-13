@@ -4,6 +4,9 @@
 
 Given two codes as the input, the task is to do binary classification (0/1), where 1 stands for semantic equivalence and 0 for others. Models are evaluated by F1 score.
 
+***!News: we have update the evaluater script. Since it's a binary classification, we use binary F1 score instead of "marco" F1 score.***
+
+
 ## Dataset
 
 The dataset we use is [BigCloneBench](https://www.cs.usask.ca/faculty/croy/papers/2014/SvajlenkoICSME2014BigERA.pdf) and filtered following the paper [Detecting Code Clones with Graph Neural Network and Flow-Augmented Abstract Syntax Tree](https://arxiv.org/pdf/2002.08653.pdf).
@@ -147,6 +150,6 @@ The results on the test set are shown as below:
 | CDLH          |   0.92    |   0.74    |   0.82    |
 | ASTNN         |   0.92    |   0.94    |   0.93    |
 | FA-AST-GMN    |   0.96    |   0.94    |   0.95    |
-| CodeBERT      |   0.964   |   0.966   |   0.965   |
-| GraphCodeBERT | **0.973** | **0.968** | **0.971** |
+| CodeBERT      |   0.947   |   0.934   |   0.941   |
+| GraphCodeBERT | **0.948** | **0.952** | **0.950** |
 
