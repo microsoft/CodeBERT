@@ -455,11 +455,11 @@ def evaluate(args, model, tokenizer, eval_when_training=False):
 
     y_preds=logits[:,1]>best_threshold
     from sklearn.metrics import recall_score
-    recall=recall_score(y_trues, y_preds, average='macro')
+    recall=recall_score(y_trues, y_preds)
     from sklearn.metrics import precision_score
-    precision=precision_score(y_trues, y_preds, average='macro')   
+    precision=precision_score(y_trues, y_preds)   
     from sklearn.metrics import f1_score
-    f1=f1_score(y_trues, y_preds, average='macro')             
+    f1=f1_score(y_trues, y_preds)             
     result = {
         "eval_recall": float(recall),
         "eval_precision": float(precision),
