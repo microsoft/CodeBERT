@@ -4,8 +4,9 @@
 
 Given two codes as the input, the task is to do binary classification (0/1), where 1 stands for semantic equivalence and 0 for others. Models are evaluated by F1 score.
 
-***!News: we have update the evaluater script. Since it's a binary classification, we use binary F1 score instead of "marco" F1 score.***
+## Updates
 
+2021-9-13: We have update the evaluater script. Since it's a binary classification, we use binary F1 score instead of "marco" F1 score.
 
 ## Dataset
 
@@ -149,7 +150,7 @@ The results on the test set are shown as below:
 | RtvNN         |   0.95    |   0.01    |   0.01    |
 | CDLH          |   0.92    |   0.74    |   0.82    |
 | ASTNN         |   0.92    |   0.94    |   0.93    |
-| FA-AST-GMN    |   0.96    |   0.94    |   0.95    |
+| FA-AST-GMN    |   **0.96**    |   0.94    |   0.95    |
 | CodeBERT      |   0.947   |   0.934   |   0.941   |
-| GraphCodeBERT | **0.948** | **0.952** | **0.950** |
+| GraphCodeBERT |  0.948 | **0.952** | **0.950** |
 
