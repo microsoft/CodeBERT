@@ -6,7 +6,7 @@ Given two codes as the input, the task is to do binary classification (0/1), whe
 
 ## Updates
 
-2021-9-13: We have update the evaluater script. Since it's a binary classification, we use binary F1 score instead of "marco" F1 score.
+2021-9-13: We have update the evaluater script. Since it's a binary classification, we use binary F1 score instead of "macro" F1 score.
 
 ## Dataset
 
