@@ -52,7 +52,8 @@ class Model(nn.Module):
         
         outputs = self.encoder.roberta(inputs_embeds=inputs_embeddings,attention_mask=attn_mask,position_ids=position_idx,token_type_ids=position_idx.eq(-1).long())[0]
         logits=self.classifier(outputs)
-        prob=F.softmax(logits)
+        # shape: [batch_size, num_classes]
+        prob=F.softmax(logits, dim=-1)
         if labels is not None:
             loss_fct = CrossEntropyLoss()
             loss = loss_fct(logits, labels)
