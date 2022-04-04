@@ -57,6 +57,7 @@ python run.py \
 	--gradient_accumulation_steps 2 \
 	--num_train_epochs 10 
 	
+# Evaluating	
 python run.py \
 	--do_test \
 	--model_name_or_path microsoft/unixcoder-base \
