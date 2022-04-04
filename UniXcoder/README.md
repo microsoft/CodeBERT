@@ -17,7 +17,7 @@ Here, we provide three types of UniXcoder:
 
 ## 2. Quick Tour
 We implement a class to use UniXcoder and you can follow the code to build UniXcoder.
-You can down the class by
+You can download the class by
 ```shell
 wget https://raw.githubusercontent.com/microsoft/CodeBERT/master/UniXcoder/unixcoder.py
 ```
