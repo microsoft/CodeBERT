@@ -36,7 +36,8 @@ python run.py \
     --learning_rate 2e-5 \
     --max_grad_norm 1.0 \
     --seed 123456
-	
+    
+# Evaluating	
 python run.py \
     --output_dir saved_models \
     --model_name_or_path microsoft/unixcoder-base \
