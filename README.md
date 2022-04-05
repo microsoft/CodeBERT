@@ -96,7 +96,7 @@ For downstream tasks like code search, clone detection, code refinement and code
 
 This repo will provide the code for reproducing the experiments in [UniXcoder: Unified Cross-Modal Pre-training for Code Representation](https://arxiv.org/pdf/2203.03850.pdf). UniXcoder is a unified cross-modal pre-trained model for programming languages to support both code-related understanding and generation tasks. 
 
-Please refer to the [UniXcoder](https://github.com/guoday/CodeBERT/tree/master/UniXcoder) folder for tutorials and downstream tasks.
+Please refer to the [UniXcoder](https://github.com/microsoft/CodeBERT/tree/master/UniXcoder) folder for tutorials and downstream tasks.
 
 ## Contact
 
