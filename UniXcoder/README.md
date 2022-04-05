@@ -189,7 +189,7 @@ print([x.replace("<mask0>","").strip() for x in predictions[0]])
 
 ## 5.  Fine-tuning
 
-For downstream tasks reported in the paper, please refer to the [downstream-tasks](https://github.com/guoday/CodeBERT/tree/master/UniXcoder/downstream-tasks) folders.
+For downstream tasks reported in the paper, please refer to the [downstream-tasks](https://github.com/microsoft/CodeBERT/tree/master/UniXcoder/downstream-tasks) folders.
 
 
 
