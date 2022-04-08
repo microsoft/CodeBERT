@@ -194,7 +194,7 @@ For downstream tasks reported in the paper, please refer to the [downstream-task
 
 
 # Reference
-If you use this code or CodeXGLUE, please consider citing us.
+If you use this code or UniXcoder, please consider citing us.
 
 <pre><code>@article{guo2022unixcoder,
   title={UniXcoder: Unified Cross-Modal Pre-training for Code Representation},
