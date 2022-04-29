@@ -136,7 +136,7 @@ python run.py \
     --output_dir saved_models/AdvTest \
     --model_name_or_path microsoft/unixcoder-base  \
     --do_test \
-		--test_data_file dataset/AdvTest/test.jsonl \
+    --test_data_file dataset/AdvTest/test.jsonl \
     --codebase_file dataset/AdvTest/test.jsonl \
     --num_train_epochs 2 \
     --code_length 256 \
@@ -189,7 +189,7 @@ python run.py \
 # Training
 lang=python
 python run.py \
-    --output_dir saved_models/cosqa \
+    --output_dir saved_models/CSN/$lang \
     --model_name_or_path microsoft/unixcoder-base  \
     --do_train \
     --train_data_file dataset/CSN/$lang/train.jsonl \
@@ -205,7 +205,7 @@ python run.py \
 
 # Evaluating
 python run.py \
-    --output_dir saved_models/cosqa \
+    --output_dir saved_models/CSN/$lang \
     --model_name_or_path microsoft/unixcoder-base  \
     --do_eval \
     --do_test \
