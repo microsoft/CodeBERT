@@ -57,7 +57,7 @@ class UniXcoder(nn.Module):
                 
             tokens_id = tokenizer.convert_tokens_to_ids(tokens)
             if padding:
-                tokens_id = tokens_id + [sel.config.pad_token_id] * (max_length-len(tokens_id))
+                tokens_id = tokens_id + [self.config.pad_token_id] * (max_length-len(tokens_id))
             tokens_ids.append(tokens_id)
         return tokens_ids
             
