@@ -98,6 +98,12 @@ This repo will provide the code for reproducing the experiments in [UniXcoder: U
 
 Please refer to the [UniXcoder](https://github.com/microsoft/CodeBERT/tree/master/UniXcoder) folder for tutorials and downstream tasks.
 
+# CodeReviewer
+
+This repo also provides the code for reproducing the experiments in [CodeReviewer: Pre-Training for Automating Code Review Activities](https://arxiv.org/abs/2203.09095). CodeReviewer is a model pre-trained with code change and code review data to support code review tasks.
+
+Please refer to the [CodeReviewer](https://github.com/microsoft/CodeBERT/tree/master/CodeReviewer) folder for tutorials and downstream tasks.
+
 ## Contact
 
 Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn), Shuai Lu (v-shuailu@microsoft.com) and Nan Duan (nanduan@microsoft.com) if you have any further questions.
