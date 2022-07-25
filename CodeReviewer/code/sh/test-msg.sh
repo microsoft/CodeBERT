@@ -1,6 +1,6 @@
 # batch size 6 for 16 GB GPU
 
-mnt_dir="/home/v-zhuoli1/lzzz"
+mnt_dir="/home/codereview"
 
 
 # You may change the following block for multiple gpu training
@@ -16,15 +16,11 @@ NCCL_DEBUG=INFO
 bash test_nltk.sh
 
 python -m torch.distributed.launch --nproc_per_node ${PER_NODE_GPU} --node_rank=${RANK} --nnodes=${NODES} --master_addr=${MASTER_HOST} --master_port=${MASTER_PORT} ../run_test_msg.py  \
-  --model_type codet5 \
-  --add_lang_ids \
-  --train_epochs 30 \
-  --config_name ${mnt_dir}/PreViewer/saved_models_gen_shuai_link/checkpoints-21600-3.24 \
-  --tokenizer_path ${mnt_dir}/PreViewer/pretrained_models/codet5 \
-  --model_name_or_path ${mnt_dir}/PreViewer/saved_models_gen_shuai_link/checkpoints-21600-3.24 \
-  --load_model_path ${mnt_dir}/PreViewer/saved_models_gen_shuai_link/checkpoints-21600-3.24 \
-  --output_dir ${mnt_dir}/PreViewer/empty \
-  --eval_file ${mnt_dir}/LinkedIn/test.jsonl \
+  --model_name_or_path microsoft/codereviewer \
+  --output_dir ../../save/gen \
+  --load_model_path ../../save/gen/checkpoint \
+  --output_dir empty \
+  --eval_file ref-test.jsonl \
   --max_source_length 512 \
   --max_target_length 128 \
   --eval_batch_size 12 \

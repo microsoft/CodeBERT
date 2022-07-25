@@ -28,14 +28,6 @@ class ReviewerModel(T5ForConditionalGeneration):
         self.cls_head = nn.Linear(self.config.d_model, 2, bias=True)
         self.init()
 
-    @staticmethod
-    def from_pretrained(path):
-        model = T5ForConditionalGeneration.from_pretrained(path)
-        model.__class__ = ReviewerModel
-        model.cls_head = nn.Linear(model.config.d_model, 2, bias=True)
-        model.init()
-        return model
-
     def init(self):
         nn.init.xavier_uniform_(self.lm_head.weight)
         factor = self.config.initializer_factor
@@ -165,88 +157,23 @@ class ReviewerModel(T5ForConditionalGeneration):
             return loss
         return cls_logits, lm_logits
 
+def get_model_size(model):
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    model_size = sum([np.prod(p.size()) for p in model_parameters])
+    return "{}M".format(round(model_size / 1e6))
 
-MODEL_CLASSES = {
-    "t5": (T5Config, ReviewerModel, T5Tokenizer),
-    "codet5": (T5Config, ReviewerModel, RobertaTokenizer),
-    "scratch": (T5Config, ReviewerModel, MyTokenizer),
-}
 
-def load_model(
-    config,
-    model,
-    tokenizer_class,
-    load_extra_ids=True,
-    add_lang_ids=False,
-    tokenizer_path="",
-    from_scratch=False
-):
-    if not tokenizer_path:      # default codet5 tokenizer
-        tokenizer_path = "Salesforce/codet5-base"
-    tokenizer = tokenizer_class.from_pretrained(tokenizer_path)
+def build_or_load_gen_model(args):
+    config_class, model_class, tokenizer_class = T5Config, ReviewerModel, RobertaTokenizer
     
-    adds = ["<pad>", "<s>", "</s>", "<unk>", "<mask>", "<keep>", "<add>", "<del>", "<start>", "<end>"]
-    # adds = ["<pad>", "<s>", "</s>", "<unk>", "<mask>"]
-    adds = [tok for tok in adds if tok not in tokenizer.get_vocab()]
-    if adds:
-        tokenizer.add_special_tokens(
-            {"additional_special_tokens": adds}
-        )
-    if load_extra_ids:
-        tokenizer.add_special_tokens(
-            {
-                "additional_special_tokens": [
-                    "<extra_id_{}>".format(i) for i in range(99, -1, -1)
-                ]
-            }
-        )
-        tokenizer.add_special_tokens(
-            {
-                "additional_special_tokens": [
-                    "<e{}>".format(i) for i in range(99, -1, -1)
-                ]
-            }
-        )
-        tokenizer.add_special_tokens({"additional_special_tokens": ["<msg>"]})
-    langs = [
-        "<en>",
-        "<python>",
-        "<java>",
-        "<javascript>",
-        "<ruby>",
-        "<php>",
-        "<go>",
-        "<c>",
-        "<c_sharp>",
-        "<c_plus_plus>",
-    ]
-    if add_lang_ids:
-        tokenizer.add_special_tokens(
-            {
-                "additional_special_tokens": langs
-            }
-        )
-        config.lang_id = {
-            lang: tokenizer.get_vocab()[lang] for lang in langs
-        }
-    config.vocab_size = len(tokenizer)
-    config.bos_token_id = tokenizer.get_vocab()["<s>"]
-    config.pad_token_id = tokenizer.get_vocab()["<pad>"]
-    config.eos_token_id = tokenizer.get_vocab()["</s>"]
-    config.mask_token_id = tokenizer.get_vocab()["<mask>"]
-    config.keep_token_id = tokenizer.get_vocab()["<keep>"]
-    config.add_token_id = tokenizer.get_vocab()["<add>"]
-    config.del_token_id = tokenizer.get_vocab()["<del>"]
-    config.start_token_id = tokenizer.get_vocab()["<start>"]
-    config.end_token_id = tokenizer.get_vocab()["<end>"]
-    
-    config.lang_tokens = langs
-    model.config = config  # changing the default config of T5
-    model.resize_token_embeddings(len(tokenizer))
+    config = config_class.from_pretrained(args.model_name_or_path)
+    tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path)
+    model = model_class.from_pretrained(args.model_name_or_path, config=config)
+
     tokenizer.special_dict = {
         f"<e{i}>" : tokenizer.get_vocab()[f"<e{i}>"] for i in range(99, -1, -1)
     }
-    # confusing api...
+
     tokenizer.mask_id = tokenizer.get_vocab()["<mask>"]
     tokenizer.bos_id = tokenizer.get_vocab()["<s>"]
     tokenizer.pad_id = tokenizer.get_vocab()["<pad>"]
@@ -257,58 +184,19 @@ def load_model(
     tokenizer.del_id = tokenizer.get_vocab()["<del>"]
     tokenizer.start_id = tokenizer.get_vocab()["<start>"]
     tokenizer.end_id = tokenizer.get_vocab()["<end>"]
-    
 
-    if from_scratch:
-        model = ReviewerModel(config)
-
-    return config, model, tokenizer
-
-
-def get_model_size(model):
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    model_size = sum([np.prod(p.size()) for p in model_parameters])
-    return "{}M".format(round(model_size / 1e6))
-
-
-def build_or_load_gen_model(args):
-    assert args.model_type.lower() in ["codet5", "t5", "scratch"]  # only t5 supported now
-    config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
-
-    if not args.model_name_or_path:
-        if args.model_type == "codet5":
-            args.model_name_or_path = "Salesforce/codet5-base"
-        else:
-            args.model_name_or_path = "t5-base"
-    
-    config = config_class.from_pretrained(
-        args.config_name if args.config_name else args.model_name_or_path
-    )
-
-    model = model_class.from_pretrained(args.model_name_or_path)
-    config, model, tokenizer = load_model(
-        config,
-        model,
-        tokenizer_class,
-        add_lang_ids=args.add_lang_ids,
-        tokenizer_path=args.tokenizer_path,
-        from_scratch=args.from_scratch
-    )
     logger.info(
         "Finish loading model [%s] from %s",
         get_model_size(model),
         args.model_name_or_path,
     )
+
     if args.load_model_path is not None:
         model_path = os.path.join(args.load_model_path, "pytorch_model.bin")
         logger.info("Reload model from {}".format(model_path))
-        try:
-            model.load_state_dict(torch.load(model_path, map_location="cpu"))
-            model.to(args.local_rank)
-        except:
-            saved = model.cls_head
-            model.cls_head = None
-            model.load_state_dict(torch.load(model_path, map_location="cpu"))
-            model.cls_head = saved
-            model.to(args.local_rank)
+        model.load_state_dict(torch.load(model_path, map_location="cpu"))
+        model.to(args.local_rank)
+
     return config, model, tokenizer
+
+

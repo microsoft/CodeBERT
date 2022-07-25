@@ -1,4 +1,13 @@
+# Code Pretraining Models
+
+This repo contains code pretraining models in the CodeBERT series from Miscrosoft, including four models as of July 2022.
+- CodeBERT (EMNLP 2020)
+- GraphCodeBERT (ICLR 2021)
+- UniXcoder (ACL 2022)
+- CodeReviewer (ESEC/FSE 2022)
+
 # CodeBERT
+
 This repo provides the code for reproducing the experiments in [CodeBERT: A Pre-Trained Model for Programming and Natural Languages](https://arxiv.org/pdf/2002.08155.pdf). CodeBERT is a pre-trained model for programming language, which is a multi-programming-lingual model pre-trained on NL-PL pairs in 6 programming languages (Python, Java, JavaScript, PHP, Ruby, Go). 
 
 ### Dependency
@@ -106,4 +115,4 @@ Please refer to the [CodeReviewer](https://github.com/microsoft/CodeBERT/tree/ma
 
 ## Contact
 
-Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn), Shuai Lu (v-shuailu@microsoft.com) and Nan Duan (nanduan@microsoft.com) if you have any further questions.
+Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn), Shuai Lu (shuailu@microsoft.com) and Nan Duan (nanduan@microsoft.com) if you have any further questions.

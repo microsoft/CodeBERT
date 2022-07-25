@@ -18,7 +18,7 @@ def add_args(parser):
     )
     parser.add_argument(
         "--model_type",
-        default="t5",
+        default="codet5",
         type=str,
         choices=["roberta", "t5", "bart", "codet5", "scratch"],
     )
@@ -33,7 +33,7 @@ def add_args(parser):
         "--output_dir",
         default=None,
         type=str,
-        required=True,
+        required=False,
         help="The output directory where the model predictions and checkpoints will be written.",
     )
     parser.add_argument(

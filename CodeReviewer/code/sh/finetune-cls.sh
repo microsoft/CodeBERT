@@ -1,6 +1,6 @@
 # batch size 12 for 16 GB GPU
 
-mnt_dir="/home/lizhuo/lzzz"
+mnt_dir="/home/codereview"
 
 # You may change the following block for multiple gpu training
 MASTER_HOST=localhost && echo MASTER_HOST: ${MASTER_HOST}
@@ -15,24 +15,18 @@ bash test_nltk.sh
 
 
 # Change the arguments as required:
-#   config_name, model_name_or_path, load_model_path: the path of the model to be finetuned
-#   tokenizer_path: the path of the tokenizer
+#   model_name_or_path, load_model_path: the path of the model to be finetuned
 #   eval_file: the path of the evaluation data
 #   output_dir: the directory to save finetuned model (not used at infer/test time)
 #   out_file: the path of the output file
 #   train_file_name: can be a directory contraining files named with "train*.jsonl"
 
 python -m torch.distributed.launch --nproc_per_node ${PER_NODE_GPU} --node_rank=${RANK} --nnodes=${NODES} --master_addr=${MASTER_HOST} --master_port=${MASTER_PORT} ../run_finetune_cls.py  \
-  --model_type codet5 \
-  --add_lang_ids \
   --train_epochs 30 \
-  --config_name ${mnt_dir}/PreViewer/saved_models_codet5_shuai/save_codet5/checkpoints-245000-3.97 \
-  --tokenizer_path ${mnt_dir}/PreViewer/pretrained_models/codet5 \
-  --model_name_or_path ${mnt_dir}/PreViewer/saved_models_codet5_shuai/save_codet5/checkpoints-245000-3.97 \
-  --load_model_path ${mnt_dir}/PreViewer/saved_models_codet5_shuai/save_codet5/checkpoints-245000-3.97 \
-  --output_dir ${mnt_dir}/PreViewer/saved_models_cls_shuai_scr \
-  --train_filename ${mnt_dir}/Processor/data \
-  --dev_filename ${mnt_dir}/Processor/data/cls-valid.jsonl \
+  --model_name_or_path microsoft/codereviewer \
+  --output_dir ../../save/cls \
+  --train_filename ../../dataset/Diff_Quality_Estimation \
+  --dev_filename ../../dataset/Diff_Quality_Estimation/cls-valid.jsonl \
   --max_source_length 512 \
   --max_target_length 128 \
   --train_batch_size 12 \
@@ -44,4 +38,4 @@ python -m torch.distributed.launch --nproc_per_node ${PER_NODE_GPU} --node_rank=
   --train_steps 120000 \
   --gpu_per_node=${PER_NODE_GPU} \
   --node_index=${RANK} \
-  --seed 2233 \
+  --seed 2233 

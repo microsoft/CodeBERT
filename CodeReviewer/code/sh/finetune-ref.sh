@@ -1,6 +1,6 @@
 # batch size 6 for 16 GB GPU
 
-mnt_dir="/home/v-zhuoli1/lzzz"
+mnt_dir="/home/codereview"
 
 # You may change the following block for multiple gpu training
 MASTER_HOST=localhost && echo MASTER_HOST: ${MASTER_HOST}
@@ -15,24 +15,18 @@ bash test_nltk.sh
 
 
 # Change the arguments as required:
-#   config_name, model_name_or_path, load_model_path: the path of the model to be finetuned
-#   tokenizer_path: the path of the tokenizer
+#   model_name_or_path, load_model_path: the path of the model to be finetuned
 #   eval_file: the path of the evaluation data
 #   output_dir: the directory to save finetuned model (not used at infer/test time)
 #   out_file: the path of the output file
 #   train_file_name: can be a directory contraining files named with "train*.jsonl"
 
 python -m torch.distributed.launch --nproc_per_node ${PER_NODE_GPU} --node_rank=${RANK} --nnodes=${NODES} --master_addr=${MASTER_HOST} --master_port=${MASTER_PORT} ../run_finetune_ref.py  \
-  --model_type codet5 \
-  --add_lang_ids \
   --train_epochs 30 \
-  --config_name ${mnt_dir}/PreViewer/saved_models_codet5_shuai/save_codet5/checkpoints-245000-3.97 \
-  --tokenizer_path ${mnt_dir}/PreViewer/pretrained_models/codet5 \
-  --model_name_or_path ${mnt_dir}/PreViewer/saved_models_codet5_shuai/save_codet5/checkpoints-245000-3.97 \
-  --load_model_path ${mnt_dir}/PreViewer/saved_models_codet5_shuai/save_codet5/checkpoints-245000-3.97 \
-  --output_dir ${mnt_dir}/PreViewer/saved_models_ref_shuai_scr \
-  --train_filename ${mnt_dir}/Processor/data/ref-train.jsonl \
-  --dev_filename ${mnt_dir}/Processor/data/ref-valid.jsonl \
+  --model_name_or_path microsoft/codereviewer \
+  --output_dir ../../save/ref \
+  --train_filename ../../data/ref-train.jsonl \
+  --dev_filename ../../data/ref-valid.jsonl \
   --max_source_length 200 \
   --max_target_length 200 \
   --train_batch_size 6 \
