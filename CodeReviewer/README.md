@@ -4,6 +4,8 @@ This repo provides the code for reproducing the experiments in [CodeReviewer: Pr
 
 The pre-trained checkpoint of CodeReivewer is available in [Huggingface](https://huggingface.co/microsoft/codereviewer). 
 
+Our dataset is available in [Zenodo](https://zenodo.org/record/6900648).
+
 ## 1. Dependency
 
 - conda install nltk
