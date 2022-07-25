@@ -36,7 +36,7 @@ The model inputs are code change (old file and diff hunk) and review comment (op
 
 ## 3. Finetune/Inference
 
-Before you start to run experiments with CodeReviewer, please download the [datasets](https://zenodo.org/record/6355569) first.
+Before you start to run experiments with CodeReviewer, please download the [datasets](https://zenodo.org/record/6900648) first.
 
 ```bash
 # prepare model checkpoint and datasets
