@@ -194,7 +194,13 @@ def build_or_load_gen_model(args):
     if args.load_model_path is not None:
         model_path = os.path.join(args.load_model_path, "pytorch_model.bin")
         logger.info("Reload model from {}".format(model_path))
-        model.load_state_dict(torch.load(model_path, map_location="cpu"))
+        try:
+            model.load_state_dict(torch.load(model_path, map_location="cpu"))
+        except RuntimeError:
+            saved = model.cls_head
+            model.cls_head = None
+            model.load_state_dict(torch.load(model_path, map_location="cpu"))
+            model.cls_head = saved
         model.to(args.local_rank)
 
     return config, model, tokenizer
