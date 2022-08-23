@@ -39,6 +39,7 @@ class UniXcoder(nn.Module):
         * `mode`- which mode the sequence will use. i.e. <encoder-only>, <decoder-only>, <encoder-decoder>
         """
         assert mode in ["<encoder-only>", "<decoder-only>", "<encoder-decoder>"]
+        assert max_length < 1024
         
         tokenizer = self.tokenizer
         
