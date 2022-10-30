@@ -43,7 +43,7 @@ function handleCodeSearch(dictOfPairs){
             if not distance in dictCompareScoresForEachQuery.keys():
                 dictCompareScoresForEachQuery[distance]=[]
             dictCompareScoresForEachQuery[distance].append(cand)
-        sort(dictCompareScoresForEachQuery)
+        sortByKeys(dictCompareScoresForEachQuery)
         topKForQuery=getTopK(query,dictCompareScoresForEachQuery)
         listOfTopKs.append(topKForQuery)
     
