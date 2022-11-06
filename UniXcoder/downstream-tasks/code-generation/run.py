@@ -353,7 +353,7 @@ def main():
                         f1.write(gold.target+'\n')     
                         EM.append(ref.split()==gold.target.split())   
                         
-                dev_bleu = _bleu(args.output_dir+"/dev.output", args.output_dir+"/dev.gold") 
+                dev_bleu = _bleu(args.output_dir+"/dev.gold", args.output_dir+"/dev.output") 
                 logger.info("  %s = %s "%("bleu-4",str(dev_bleu)))
                 logger.info("  %s = %s "%("EM",str(round(np.mean(EM)*100,2))))
                 logger.info("  "+"*"*20)    
