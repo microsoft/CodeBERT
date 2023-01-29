@@ -79,14 +79,6 @@ def eval_bleu_epoch(args, eval_dataloader, model, tokenizer):
         for line in f:
             golds.append(json.loads(line)["msg"])
     golds = golds[:len(pred_nls)]
-    with open(os.path.join(args.model_name_or_path, "preds.txt"), "w", encoding="utf-8") as f:
-        for pred in pred_nls:
-            f.write(pred.strip() + "\n")
-    with open(os.path.join(args.model_name_or_path, "golds.txt"), "w", encoding="utf-8") as f:
-        for gold in golds:
-            f.write(gold.strip() + "\n")
-    # logger.warning(f"Golds: {golds}")
-    # logger.warning(f"Preds: {pred_nls}")
     bleu = bleu_fromstr(pred_nls, golds, rmstop=False)
     return bleu
 
