@@ -52,7 +52,14 @@ def eval_epoch_bleu(args, eval_dataloader, model, tokenizer):
         source_ids = torch.tensor(
             [ex.source_ids for ex in examples], dtype=torch.long
         ).to(args.local_rank)
-        top_preds = list(source_ids.cpu().numpy())
+        source_mask = source_ids.ne(tokenizer.pad_id)
+        preds = model.generate(source_ids,
+                            attention_mask=source_mask,
+                            use_cache=True,
+                            num_beams=args.beam_size,
+                            early_stopping=True,
+                            max_length=args.max_target_length)
+        top_preds = list(preds.cpu().numpy())
         pred_ids.extend(top_preds)
     pred_nls = [tokenizer.decode(id, skip_special_tokens=True, clean_up_tokenization_spaces=False) for id in pred_ids]
     valid_file = args.eval_file
