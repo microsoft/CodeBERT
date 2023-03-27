@@ -91,7 +91,7 @@ The detailed outputs are as follows:
 
 ### Downstream Tasks
 
-For Code Search and Code Docsmentation Generation tasks, please refer to the [CodeBERT](https://github.com/guoday/CodeBERT/tree/master/CodeBERT) folder.
+For Code Search and Code Documentation Generation tasks, please refer to the [CodeBERT](https://github.com/microsoft/CodeBERT/tree/master/CodeBERT) folder.
 
 
 
@@ -99,7 +99,7 @@ For Code Search and Code Docsmentation Generation tasks, please refer to the [Co
 
 This repo also provides the code for reproducing the experiments in [GraphCodeBERT: Pre-training Code Representations with Data Flow](https://openreview.net/pdf?id=jLoC4ez43PZ). GraphCodeBERT is a pre-trained model for programming language that considers the inherent structure of code i.e. data flow, which is a multi-programming-lingual model pre-trained on NL-PL pairs in 6 programming languages (Python, Java, JavaScript, PHP, Ruby, Go). 
 
-For downstream tasks like code search, clone detection, code refinement and code translation, please refer to the [GraphCodeBERT](https://github.com/guoday/CodeBERT/tree/master/GraphCodeBERT) folder.
+For downstream tasks like code search, clone detection, code refinement and code translation, please refer to the [GraphCodeBERT](https://github.com/microsoft/CodeBERT/tree/master/GraphCodeBERT) folder.
 
 # UniXcoder
 
