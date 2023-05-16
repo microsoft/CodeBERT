@@ -5,6 +5,7 @@ This repo contains code pretraining models in the CodeBERT series from Microsoft
 - GraphCodeBERT (ICLR 2021)
 - UniXcoder (ACL 2022)
 - CodeReviewer (ESEC/FSE 2022)
+- CodeExecutor (ACL 2023)
 
 # CodeBERT
 
