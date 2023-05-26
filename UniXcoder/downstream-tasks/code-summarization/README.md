@@ -7,12 +7,12 @@ wget https://github.com/microsoft/CodeXGLUE/raw/main/Code-Text/code-to-text/data
 unzip dataset.zip
 rm dataset.zip
 cd dataset
-wget https://s3.amazonaws.com/code-search-net/CodeSearchNet/v2/python.zip
-wget https://s3.amazonaws.com/code-search-net/CodeSearchNet/v2/java.zip
-wget https://s3.amazonaws.com/code-search-net/CodeSearchNet/v2/ruby.zip
-wget https://s3.amazonaws.com/code-search-net/CodeSearchNet/v2/javascript.zip
-wget https://s3.amazonaws.com/code-search-net/CodeSearchNet/v2/go.zip
-wget https://s3.amazonaws.com/code-search-net/CodeSearchNet/v2/php.zip
+wget https://zenodo.org/record/7857872/files/python.zip
+wget https://zenodo.org/record/7857872/files/java.zip
+wget https://zenodo.org/record/7857872/files/ruby.zip
+wget https://zenodo.org/record/7857872/files/javascript.zip
+wget https://zenodo.org/record/7857872/files/go.zip
+wget https://zenodo.org/record/7857872/files/php.zip
 
 unzip python.zip
 unzip java.zip
