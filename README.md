@@ -1,6 +1,6 @@
 # Code Pretraining Models
 
-This repo contains code pretraining models in the CodeBERT series from Microsoft, including four models as of July 2022.
+This repo contains code pretraining models in the CodeBERT series from Microsoft, including five models as of June 2022.
 - CodeBERT (EMNLP 2020)
 - GraphCodeBERT (ICLR 2021)
 - UniXcoder (ACL 2022)
