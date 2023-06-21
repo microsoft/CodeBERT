@@ -114,6 +114,12 @@ This repo also provides the code for reproducing the experiments in [CodeReviewe
 
 Please refer to the [CodeReviewer](https://github.com/microsoft/CodeBERT/tree/master/CodeReviewer) folder for tutorials and downstream tasks.
 
+# CodeExecutor
+
+This repo provides the code for reproducing the experiments in [Code Execution with Pre-trained Language Models](https://arxiv.org/pdf/2305.05383.pdf). CodeExecutor is a pre-trained model that learns to predict the execution traces using a code execution pre-training task and curriculum learning.
+
+Please refer to the [CodeExecutor](https://github.com/microsoft/CodeBERT/tree/master/CodeExecutor) folder for details.
+
 ## Contact
 
 Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn), Shuai Lu (shuailu@microsoft.com) and Nan Duan (nanduan@microsoft.com) if you have any further questions.
