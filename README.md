@@ -6,6 +6,7 @@ This repo contains code pretraining models in the CodeBERT series from Microsoft
 - UniXcoder (ACL 2022)
 - CodeReviewer (ESEC/FSE 2022)
 - CodeExecutor (ACL 2023)
+- LongCoder (ICML 2023)
 
 # CodeBERT
 
@@ -120,6 +121,11 @@ This repo provides the code for reproducing the experiments in [Code Execution w
 
 Please refer to the [CodeExecutor](https://github.com/microsoft/CodeBERT/tree/master/CodeExecutor) folder for details.
 
+# LongCoder
+
+This repo will provide the code for reproducing the experiments on LCC datasets in [LongCoder: A Long-Range Pre-trained Language Model for Code Completion](https://arxiv.org/abs/2306.14893). LongCoder is a sparse and efficient pre-trained Transformer model for long code modeling.
+
+Please refer to the [LongCoder](https://github.com/microsoft/CodeBERT/tree/master/LongCoder) folder for details.
 ## Contact
 
 Feel free to contact Daya Guo (guody5@mail2.sysu.edu.cn), Shuai Lu (shuailu@microsoft.com) and Nan Duan (nanduan@microsoft.com) if you have any further questions.
