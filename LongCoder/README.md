@@ -74,7 +74,7 @@ python run.py \
 ```
 
 # Reference
-If you use this code or UniXcoder, please consider citing us.
+If you use this code or LongCoder, please consider citing us.
 
 <pre><code>@article{longcoder,
     title={LongCoder: A Long-Range Pre-trained Language Model for Code Completion},
