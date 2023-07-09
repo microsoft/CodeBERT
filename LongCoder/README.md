@@ -7,8 +7,15 @@ This repo will provide the code for reproducing the experiments on LCC datasets 
 - pip install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
 - pip install --upgrade  transformers fuzzywuzzy tree_sitter datasets
 
-## 2. Fine-Tune Setting
-Here we provide fine-tune settings for code completion on LCC datasets in C# programming language, whose results are reported in the paper. 
+## 2. Dataset
+In this repo, the LCC dataset will be automatically downloaded when running the fine-tuning script. If you want to download LCC datasets by yourself, you can find them in the following links:
+```
+https://huggingface.co/datasets/microsoft/LCC_python
+https://huggingface.co/datasets/microsoft/LCC_java
+https://huggingface.co/datasets/microsoft/LCC_csharp
+```
+## 3. Fine-Tune Setting
+Here we provide fine-tune settings for code completion on LCC datasets in C# programming language, whose results are reported in the paper.
 
 Note that it requires 8 v100-32G GPUs, and you can adjust batch size or source length based on your requirements.
 
@@ -43,7 +50,7 @@ python run.py \
 --num_train_epochs $epochs  2>&1| tee $output_dir/train.log
 ```
 
-## 3. Evaluating LongCoder
+## 4. Evaluating LongCoder
 
 ```shell
 lang=csharp #csharp, python, java
