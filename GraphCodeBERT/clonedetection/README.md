@@ -69,7 +69,7 @@ We also provide a pipeline that fine-tunes GraphCodeBERT on this task.
 - pip install torch
 - pip install transformers
 - pip install tree_sitter
-- pip sklearn
+- pip install scikit-learn
 
 ### Tree-sitter (optional)
 
